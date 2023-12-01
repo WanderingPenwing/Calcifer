@@ -17,10 +17,17 @@
     </div>
     <!-- Page content -->
     <div class="main">
-      <h1>Mes Notes</h1>
-      <input type="file" name="inputfile" id="inputfile">
-      <br>
-      <textarea id="output" name="story" rows="5" cols="33" placeholder="Aucun fichier chargé"></textarea>
+      <div class="content">
+        <h1>Mes Notes</h1>
+        <br>
+        <textarea id="output" name="story" placeholder="Aucun fichier chargé"></textarea>
+      </div>
+      <div class="tab">
+        <button class="tablinks" onclick="openCity(event, 'London')"><p>Tab1</p><a href="#">x</a></button>
+        <button class="tablinks" onclick="openCity(event, 'Paris')"><p>Tab2</p><a href="#">x</a></button>
+        <button class="tablinks" onclick="openCity(event, 'Tokyo')"><p>Tab3</p><a href="#">x</a></button>
+      </div>
+      </div>
     </div>
   </body>
 </html>
