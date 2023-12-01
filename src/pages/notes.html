@@ -19,13 +19,17 @@
     <div class="main">
       <div class="content">
         <h1>Mes Notes</h1>
+        <div class="shelf">
+          <label for="inputfile" class="custom-inputfile">
+            <i class="fa fa-cloud-upload"></i> Ouvrir un fichier
+          </label>
+          <input id="inputfile" type="file"/>
+          <a href="note.txt" download="note.txt">Créer un fichier</a>
+        </div>
         <br>
-        <textarea id="output" name="story" placeholder="Aucun fichier chargé"></textarea>
+        <textarea id="output" class="textzone" name="story" placeholder="Aucun fichier chargé"></textarea>
       </div>
-      <div class="tab">
-        <button class="tablinks" onclick="openCity(event, 'London')"><p>Tab1</p><a href="#">x</a></button>
-        <button class="tablinks" onclick="openCity(event, 'Paris')"><p>Tab2</p><a href="#">x</a></button>
-        <button class="tablinks" onclick="openCity(event, 'Tokyo')"><p>Tab3</p><a href="#">x</a></button>
+      <div id="tabs" class="tab">
       </div>
       </div>
     </div>

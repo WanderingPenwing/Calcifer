@@ -1,7 +1,6 @@
 //<input type="file" name="inputfile" id="inputfile">
 
-document.getElementById('inputfile')
-  .addEventListener('change', function () {
+document.getElementById('inputfile').addEventListener('change', function () {
     let fr = new FileReader();
     fr.onload = function () {
       document.getElementById('output').textContent = fr.result;
@@ -9,8 +8,11 @@ document.getElementById('inputfile')
     fr.readAsText(this.files[0]);
 })
 
+
+//<button id="tab1" class="tablinks"><p>Tab1</p><a href="#">x</a></button>
+
 function openCity(evt, cityName) {
-  console.log("helooo")
+  console.log("helooo");
   // Declare all variables
   var i, tablinks;
 

@@ -27,6 +27,11 @@
   padding-top: 80px;
 }
 
+.shelf {
+  width: 100%;
+  display: inline-block
+}
+
 .tab {
   height: 60px; /* Full-height: remove this if you want "auto" height */
   width: 100%; /* Set the width of the sidebar */
@@ -38,6 +43,8 @@
   overflow: hidden;
 }
 
+
+
 /* Style the buttons that are used to open the tab content */
 .tab button {
   background-color: inherit;
@@ -48,9 +55,17 @@
   padding: 14px 16px;
   transition: 0.3s;
   color: #818181;
-  width: 180px;
   display:flex;
   align-items: center;
+}
+
+.tabcreate {
+  width: 42px;
+  font-weight: bold;
+}
+
+.tablinks {
+  width: 180px;
 }
 
 /* Change background color of buttons on hover */
@@ -67,6 +82,7 @@
   text-align: left;
   width: 100%;
 }
+
 
 
 /* The navigation menu links */
@@ -95,6 +111,14 @@
   padding-right: 10px;
 }
 
+.textzone {
+  width: 100%;
+  height: 100%;
+  font-size: 1em;
+  font-weight: 500;
+  padding: 1em;
+}
+
 /* On smaller screens, where height is less than 450px, change the style of the sidebar (less padding and a smaller font size) */
 @media screen and (max-height: 450px) {
   .sidenav {padding-top: 15px;}
@@ -110,19 +134,13 @@ html, body {
   margin: 0;
 }
 
-
 textarea {
-  width: 100%;
-  height: 100%;
-  resize: none;
-  padding: 1em;
   background-color: #0f0f0f98;
-  color: #818181;
-  font-size: 1em;
-  font-weight: 500;
   font-family: inherit;
   border-radius: 10px;
   border: 3px solid #818181;
+  color: #818181;
+  resize: none;
 }
 
 input {
@@ -147,4 +165,14 @@ a {
 
 a:hover {
   color: #ec9f53;
+}
+
+input[type="file"] {
+    display: none;
+}
+.custom-inputfile {
+    border: 1px solid #ccc;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
 }
