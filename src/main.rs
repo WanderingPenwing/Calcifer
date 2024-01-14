@@ -1,4 +1,5 @@
 use eframe::egui;
+use egui_extras::syntax_highlighting;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -13,6 +14,41 @@ fn main() -> Result<(), eframe::Error> {
         options,
         Box::new(|_cc| Box::<MyApp>::default()),
     )
+}
+
+struct CodeEditor {
+    language: String,
+    code: String,
+}
+
+impl Default for CodeEditor {
+    fn default() -> Self {
+        Self {
+            language: "rs".into(),
+            code: "// A very simple example\n\
+                   fn main() {\n\
+                   \tprintln!(\"Hello world!\");\n\
+                   }\n\
+                   "
+            .into(),
+        }
+    }
+}
+
+impl CodeEditor {
+    fn ui(&mut self, ui: &mut egui::Ui) {
+        // The contents of the ui method from your reference go here
+        // ...
+
+        // You can also replace `self.code` with `&mut self.code` in the method
+        // to directly modify the code in the CodeEditor instance.
+    }
+
+    fn show(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        // The contents of the show method from your reference go here
+        // ...
+        self.ui(ui);
+    }
 }
 
 #[derive(Default)]
@@ -43,8 +79,10 @@ impl eframe::App for MyApp {
                 });
             }
             
-            //ui.code_editor(&self.code);
-        });
+            let mut code_editor = CodeEditor::default();
+				code_editor.code = self.code.clone(); // Initialize code editor with MyApp's code
+				code_editor.show(ctx, ui);
+			});
         
         egui::TopBottomPanel::bottom("terminal").show(ctx, |ui| {
 			ui.label("Terminal ?");
