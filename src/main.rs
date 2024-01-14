@@ -18,6 +18,7 @@ fn main() -> Result<(), eframe::Error> {
 #[derive(Default)]
 struct MyApp {
     picked_path: Option<String>,
+    code: String,
 }
 
 impl eframe::App for MyApp {
@@ -25,6 +26,7 @@ impl eframe::App for MyApp {
 		egui::SidePanel::left("my_left_panel").show(ctx, |ui| {
 			ui.label("Tree ?");
 		});
+		
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Open file…").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -40,9 +42,12 @@ impl eframe::App for MyApp {
                     ui.monospace(picked_path);
                 });
             }
+            
+            //ui.code_editor(&self.code);
         });
+        
         egui::TopBottomPanel::bottom("terminal").show(ctx, |ui| {
-			ui.label("Terminal");
+			ui.label("Terminal ?");
 		});
     }
 }
