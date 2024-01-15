@@ -1,16 +1,17 @@
 
-mod tools;
+//mod tools;
 
 use eframe::egui;
-//use tools::Demo;
+use std::fs;
+use std::path::Path;
 
 
 fn main() -> Result<(), eframe::Error> {
-	tools::code_editor::linked();
+	//tools::code_editor::linked();
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1200.0, 800.0]) // wide enough for the drag-drop overlay text
+            .with_inner_size([1200.0, 800.0])
             .with_drag_and_drop(true),
         ..Default::default()
     };
@@ -21,7 +22,7 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
-//#[derive(Default)]
+
 struct MyApp {
     picked_path: Option<String>,
     language: String,
@@ -43,6 +44,7 @@ fn main() {\n\
     }
 }
 
+
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 		egui::SidePanel::left("my_left_panel").show(ctx, |ui| {
@@ -53,6 +55,8 @@ impl eframe::App for MyApp {
             if ui.button("Open file…").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
                     self.picked_path = Some(path.display().to_string());
+                    let file_path = Path::new(self.picked_path.as_deref().unwrap_or_default());
+                    self.code = fs::read_to_string(file_path).expect("Should have been able to read the file");
                 }
             }
 
@@ -62,8 +66,6 @@ impl eframe::App for MyApp {
                     ui.monospace(picked_path);
                 });
             }
-            
-			//self.code_editor.show(ctx, &mut self.code_open);
 			
 			let Self { language, code, .. } = self;
 			
@@ -80,6 +82,7 @@ impl eframe::App for MyApp {
 					egui::TextEdit::multiline(code)
 						.font(egui::FontId::monospace(60.0)) // for cursor height
 						.code_editor()
+						.lock_focus(true)
 						.desired_rows(20)
 						.lock_focus(true)
 						.desired_width(f32::INFINITY)
