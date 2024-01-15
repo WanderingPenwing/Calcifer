@@ -1,7 +1,12 @@
+
+mod tools;
+
 use eframe::egui;
-use egui_extras::syntax_highlighting;
+use tools::Demo;
+
 
 fn main() -> Result<(), eframe::Error> {
+	tools::code_editor::linked();
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -16,45 +21,21 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
-struct CodeEditor {
-    language: String,
-    code: String,
-}
-
-impl Default for CodeEditor {
-    fn default() -> Self {
-        Self {
-            language: "rs".into(),
-            code: "// A very simple example\n\
-                   fn main() {\n\
-                   \tprintln!(\"Hello world!\");\n\
-                   }\n\
-                   "
-            .into(),
-        }
-    }
-}
-
-impl CodeEditor {
-    fn ui(&mut self, ui: &mut egui::Ui) {
-        // The contents of the ui method from your reference go here
-        // ...
-
-        // You can also replace `self.code` with `&mut self.code` in the method
-        // to directly modify the code in the CodeEditor instance.
-    }
-
-    fn show(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        // The contents of the show method from your reference go here
-        // ...
-        self.ui(ui);
-    }
-}
-
-#[derive(Default)]
+//#[derive(Default)]
 struct MyApp {
     picked_path: Option<String>,
-    code: String,
+    code_editor: tools::code_editor::CodeEditor,
+    code_open: bool,
+}
+
+impl Default for MyApp {
+    fn default() -> Self {
+        Self {
+            picked_path: None,
+            code_editor: tools::code_editor::CodeEditor::default(), // Initialize CodeEditor
+            code_open: true,
+        }
+    }
 }
 
 impl eframe::App for MyApp {
@@ -79,11 +60,13 @@ impl eframe::App for MyApp {
                 });
             }
             
-            let mut code_editor = CodeEditor::default();
-				code_editor.code = self.code.clone(); // Initialize code editor with MyApp's code
-				code_editor.show(ctx, ui);
-			});
-        
+            //~ let mut code_editor = CodeEditor::default();
+				//~ code_editor.code = self.code.clone(); // Initialize code editor with MyApp's code
+				//~ code_editor.language = self.language.clone();
+				//~ code_editor.show(ctx, ui);
+			//~ 
+			self.code_editor.show(ctx, &mut self.code_open);
+        });
         egui::TopBottomPanel::bottom("terminal").show(ctx, |ui| {
 			ui.label("Terminal ?");
 		});
