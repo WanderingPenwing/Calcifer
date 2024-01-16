@@ -4,16 +4,12 @@
 use eframe::egui;
 use std::fs;
 use std::path::Path;
-use run_shell::*;
-
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 
 
 fn main() -> Result<(), eframe::Error> {
 	//tools::code_editor::linked();
-	println!("{}", cmd!("echo General Kenobi").stdout_utf8().unwrap());
-	println!("{}", cmd!("pwd").stdout_utf8().unwrap());
 	
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
@@ -29,11 +25,17 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
+fn run_command(cmd : String) -> String {
+	cmd
+}
+
 
 struct MyApp {
     picked_path: Option<String>,
     language: String,
     code: String,
+    command: String,
+    command_history: String,
 }
 
 impl Default for MyApp {
@@ -41,12 +43,9 @@ impl Default for MyApp {
         Self {
             picked_path: None,
             language: "rs".into(),
-            code: "// A very simple example\n\
-fn main() {\n\
-\tprintln!(\"Hello world!\");\n\
-}\n\
-"
-            .into(),
+            code: "// A very simple example\nfn main() {\n\tprintln!(\"Hello world!\");\n}\n".into(),
+            command: "".into(),
+            command_history: "Welcome master".into(),
         }
     }
 }
@@ -54,10 +53,34 @@ fn main() {\n\
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		egui::SidePanel::left("my_left_panel").show(ctx, |ui| {
+		
+		//tree panel
+		egui::SidePanel::left("tree").show(ctx, |ui| {
 			ui.label("Tree ?");
 		});
 		
+		//terminal panel
+		egui::TopBottomPanel::bottom("terminal").exact_height(TERMINAL_HEIGHT.clone()).show(ctx, |ui| {
+			ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+				ui.label("");
+				ui.horizontal(|ui| {
+					let Self { command, .. } = self;
+					ui.label(">");
+					let response = ui.add(egui::TextEdit::singleline(command).desired_width(f32::INFINITY).lock_focus(true));
+					
+					if response.lost_focus() && ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+						self.command_history.push_str(&("\n".to_string() + &run_command(self.command.clone())));
+						self.command = "".into();
+						response.request_focus();
+					}
+				});
+				egui::ScrollArea::vertical().show(ui, |ui| {
+					ui.label(self.command_history.clone());
+				});
+			});
+		});
+		
+		//code panel
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Open file…").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -74,8 +97,8 @@ impl eframe::App for MyApp {
                 });
             }
 			
-			let Self { language, code, .. } = self;
 			
+			let Self { language, code, .. } = self;
 			let theme = egui_extras::syntax_highlighting::CodeTheme::from_memory(ui.ctx());
 			let mut layouter = |ui: &egui::Ui, string: &str, wrap_width: f32| {
 				let mut layout_job =
@@ -97,9 +120,6 @@ impl eframe::App for MyApp {
 				);
 			});
         });
-        egui::TopBottomPanel::bottom("terminal").min_height(TERMINAL_HEIGHT.clone()).show(ctx, |ui| {
-			ui.label("Terminal ?");
-		});
     }
 }
 
