@@ -4,10 +4,17 @@
 use eframe::egui;
 use std::fs;
 use std::path::Path;
+use run_shell::*;
+
+
+const TERMINAL_HEIGHT : f32 = 200.0;
 
 
 fn main() -> Result<(), eframe::Error> {
 	//tools::code_editor::linked();
+	println!("{}", cmd!("echo General Kenobi").stdout_utf8().unwrap());
+	println!("{}", cmd!("pwd").stdout_utf8().unwrap());
+	
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -90,7 +97,7 @@ impl eframe::App for MyApp {
 				);
 			});
         });
-        egui::TopBottomPanel::bottom("terminal").show(ctx, |ui| {
+        egui::TopBottomPanel::bottom("terminal").min_height(TERMINAL_HEIGHT.clone()).show(ctx, |ui| {
 			ui.label("Terminal ?");
 		});
     }
