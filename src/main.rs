@@ -4,6 +4,7 @@
 use eframe::egui;
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 
@@ -26,7 +27,13 @@ fn main() -> Result<(), eframe::Error> {
 }
 
 fn run_command(cmd : String) -> String {
-	cmd
+	let command = "> ".to_owned() + &cmd.clone() + "\n";
+	let output = Command::new("sh")
+        .arg("-c")
+        .arg(cmd)
+        .output()
+        .expect("failed to execute process");
+	(command + &String::from_utf8_lossy(&output.stdout)).to_string()
 }
 
 
@@ -37,6 +44,7 @@ struct MyApp {
     command: String,
     command_history: String,
 }
+
 
 impl Default for MyApp {
     fn default() -> Self {
