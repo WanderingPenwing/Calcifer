@@ -6,6 +6,7 @@ use std::path::Path;
 use std::fs;
 use std::io;
 use std::process::Command;
+use std::cmp::Ordering;
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 
@@ -36,17 +37,34 @@ fn run_command(cmd : String) -> String {
 	(command + &String::from_utf8_lossy(&output.stdout)).to_string()
 }
 
+fn sort_directories_first(a: &std::fs::DirEntry, b: &std::fs::DirEntry) -> Ordering {
+    let a_is_dir = a.path().is_dir();
+    let b_is_dir = b.path().is_dir();
+
+    // Directories come first, then files
+    if a_is_dir && !b_is_dir {
+        Ordering::Less
+    } else if !a_is_dir && b_is_dir {
+        Ordering::Greater
+    } else {
+        // Both are either directories or files, sort alphabetically
+        a.path().cmp(&b.path())
+    }
+}
 
 fn list_files(ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
 	if let Some(name) = path.file_name() {
 		if path.is_dir() {
 			egui::CollapsingHeader::new(name.to_string_lossy()).show(ui, |ui| {
-                let paths = fs::read_dir(&path).expect("Failed to read dir");
-                
-				for path_result in paths {
-					let result = path_result.expect("Failed to get path");
-					let full_path = result.path();
-					let _ = list_files(ui, &full_path);
+                let mut paths: Vec<_> = fs::read_dir(&path).expect("Failed to read dir").map(|r| r.unwrap()).collect();
+                                              
+                // Sort the vector using the custom sorting function
+				paths.sort_by(|a, b| sort_directories_first(a, b));
+
+				for result in paths {
+					//let result = path_result.expect("Failed to get path");
+					//let full_path = result.path();
+					let _ = list_files(ui, &result.path());
 				}
             });
 		} else {
@@ -90,8 +108,9 @@ impl eframe::App for MyApp {
 impl MyApp {
     fn draw_tree_panel(&self, ctx: &egui::Context) {
         egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
-			ui.heading("File Tree");
-			let _ = list_files(ui, Path::new("/home/penwing/Documents/notes/"));
+			ui.heading("Bookshelves");
+			let _ = list_files(ui, Path::new("/home/penwing/Documents/"));
+			ui.separator();
 		});
     }
 
@@ -142,8 +161,7 @@ impl MyApp {
             let Self { language, code, .. } = self;
             let theme = egui_extras::syntax_highlighting::CodeTheme::from_memory(ui.ctx());
             let mut layouter = |ui: &egui::Ui, string: &str, wrap_width: f32| {
-                let mut layout_job =
-                    egui_extras::syntax_highlighting::highlight(ui.ctx(), &theme, string, language);
+                let mut layout_job = egui_extras::syntax_highlighting::highlight(ui.ctx(), &theme, string, language);
                 layout_job.wrap.max_width = wrap_width;
                 ui.fonts(|f| f.layout_job(layout_job))
             };
