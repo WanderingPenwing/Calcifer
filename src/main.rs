@@ -1,17 +1,15 @@
 
-//mod tools;
+mod tools;
 
 use eframe::egui;
 use std::path::Path;
 use std::fs;
-use std::io;
-use std::process::Command;
-use std::cmp::Ordering;
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 
 
 fn main() -> Result<(), eframe::Error> {
+	tools::loaded();
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -24,54 +22,6 @@ fn main() -> Result<(), eframe::Error> {
         options,
         Box::new(|_cc| Box::<MyApp>::default()),
     )
-}
-
-
-fn run_command(cmd : String) -> String {
-	let command = "> ".to_owned() + &cmd.clone() + "\n";
-	let output = Command::new("sh")
-        .arg("-c")
-        .arg(cmd)
-        .output()
-        .expect("failed to execute process");
-	(command + &String::from_utf8_lossy(&output.stdout)).to_string()
-}
-
-fn sort_directories_first(a: &std::fs::DirEntry, b: &std::fs::DirEntry) -> Ordering {
-    let a_is_dir = a.path().is_dir();
-    let b_is_dir = b.path().is_dir();
-
-    // Directories come first, then files
-    if a_is_dir && !b_is_dir {
-        Ordering::Less
-    } else if !a_is_dir && b_is_dir {
-        Ordering::Greater
-    } else {
-        // Both are either directories or files, sort alphabetically
-        a.path().cmp(&b.path())
-    }
-}
-
-fn list_files(ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
-	if let Some(name) = path.file_name() {
-		if path.is_dir() {
-			egui::CollapsingHeader::new(name.to_string_lossy()).show(ui, |ui| {
-                let mut paths: Vec<_> = fs::read_dir(&path).expect("Failed to read dir").map(|r| r.unwrap()).collect();
-                                              
-                // Sort the vector using the custom sorting function
-				paths.sort_by(|a, b| sort_directories_first(a, b));
-
-				for result in paths {
-					//let result = path_result.expect("Failed to get path");
-					//let full_path = result.path();
-					let _ = list_files(ui, &result.path());
-				}
-            });
-		} else {
-			ui.label(name.to_string_lossy());
-        }
-    }
-    Ok(())
 }
 
 
@@ -109,7 +59,7 @@ impl MyApp {
     fn draw_tree_panel(&self, ctx: &egui::Context) {
         egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
 			ui.heading("Bookshelves");
-			let _ = list_files(ui, Path::new("/home/penwing/Documents/"));
+			let _ = tools::list_files(ui, Path::new("/home/penwing/Documents/"));
 			ui.separator();
 		});
     }
@@ -126,7 +76,7 @@ impl MyApp {
                         let response = ui.add(egui::TextEdit::singleline(command).desired_width(f32::INFINITY).lock_focus(true));
 
                         if response.lost_focus() && ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-                            self.command_history.push_str(&("\n".to_string() + &run_command(self.command.clone())));
+                            self.command_history.push_str(&("\n".to_string() + &tools::run_command(self.command.clone())));
                             self.command = "".into();
                             response.request_focus();
                         }
