@@ -2,10 +2,7 @@
 mod tools;
 
 use eframe::egui;
-use std::path::Path;
-use std::fs;
-use std::io;
-use std::env;
+use std::{path::Path, fs, io, env};
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
@@ -32,6 +29,8 @@ struct MyApp {
     picked_path: Option<String>,
     language: String,
     code: String,
+    selected_tab : tools::TabNumber,
+    tabs: Vec<tools::Tab>,
     command: String,
     command_history: Vec<tools::CommandEntry>,
 }
@@ -43,6 +42,8 @@ impl Default for MyApp {
             picked_path: None,
             language: "rs".into(),
             code: "// write here".into(),
+            selected_tab : tools::TabNumber::None,
+			tabs: Vec::new(),
             command: "".into(),
             command_history: Vec::new(),
         }
@@ -54,6 +55,7 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.draw_tree_panel(ctx);
         self.draw_terminal_panel(ctx);
+        self.draw_tab_panel(ctx);
         self.draw_code_panel(ctx);
     }
 }
@@ -112,15 +114,31 @@ impl MyApp {
                 });
             });
     }
+    
+    fn draw_tab_panel(&mut self, ctx: &egui::Context) {
+		egui::TopBottomPanel::top("tabs")
+			.resizable(false)
+			.show(ctx, |ui| {
+				ui.horizontal(|ui| {
+					for (index, tab) in self.tabs.iter().enumerate() {
+						ui.selectable_value(&mut self.selected_tab, tools::TabNumber::get_from_n(index), tab.get_name());
+					}
+					if tools::TabNumber::get_from_n(self.tabs.len()) != tools::TabNumber::None {
+						ui.selectable_value(&mut self.selected_tab, tools::TabNumber::Open, "+");
+					}
+					if self.selected_tab == tools::TabNumber::Open {
+						if let Some(path) = rfd::FileDialog::new().pick_file() {
+							self.selected_tab = self.open_file(&path);
+						} else {
+							self.selected_tab = tools::TabNumber::None;
+						}
+					}
+				});
+			});
+	}
 
     fn draw_code_panel(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            if ui.button("Open file…").clicked() {
-                if let Some(path) = rfd::FileDialog::new().pick_file() {
-                    self.open_file(&path);
-                }
-            }
-
             if let Some(picked_path) = &self.picked_path {
                 ui.horizontal(|ui| {
                     ui.label("Picked file:");
@@ -169,18 +187,30 @@ impl MyApp {
 			} else {
 				//ui.label(name.to_string_lossy());
 				if ui.button(name.to_string_lossy()).clicked() {
-					self.open_file(&path)
+					self.selected_tab = self.open_file(&path);
 				}
 			}
 		}
 		Ok(())
 	}
 	
-	fn open_file(&mut self, path: &Path) {
+	fn open_file(&mut self, path: &Path) -> tools::TabNumber {
+		if tools::TabNumber::get_from_n(self.tabs.len()) == tools::TabNumber::None {
+			return tools::TabNumber::None
+		}
 		self.picked_path = Some(path.display().to_string());
 		let file_path = Path::new(self.picked_path.as_deref().unwrap_or_default());
 		self.code = fs::read_to_string(file_path).expect("Not able to read the file");
 		self.language = file_path.to_str().unwrap().split('.').last().unwrap().into();
+		
+		let new_tab = tools::Tab {
+			path: path.into(),
+			code: fs::read_to_string(file_path).expect("Not able to read the file"),
+			language: file_path.to_str().unwrap().split('.').last().unwrap().into(),
+		};
+		self.tabs.push(new_tab);
+		
+		return tools::TabNumber::get_from_n(self.tabs.len() - 1)
 	}
 }
 

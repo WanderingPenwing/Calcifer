@@ -1,10 +1,54 @@
 //use eframe::egui;
 //use std::io;
-use std::process::Command;
-use std::cmp::Ordering;
-use std::env;
-//use std::path::Path;
+use std::{process::Command, cmp::Ordering, env, path::PathBuf};
 //use std::fs;
+
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum TabNumber {
+	None,
+	Open,
+	Zero,
+	One,
+	Two,
+	Three,
+	Four,
+	Five,
+	Six,
+	Seven,
+}
+
+
+impl TabNumber {
+    pub fn get_from_n( n: usize) -> TabNumber {
+        match n {
+            0 => TabNumber::Zero,
+            1 => TabNumber::One,
+            2 => TabNumber::Two,
+            3 => TabNumber::Three,
+            4 => TabNumber::Four,
+            5 => TabNumber::Five,
+            6 => TabNumber::Six,
+            7 => TabNumber::Seven,
+            _ => TabNumber::None,
+        }
+    }
+}
+
+
+pub struct Tab {
+	pub path : PathBuf,
+	pub code : String,
+	pub language : String,
+}
+
+
+impl Tab {
+	pub fn get_name(&self) -> String {
+		self.path.file_name().expect("Could not get Tab Name").to_string_lossy().to_string()
+	}
+}
+
 
 pub struct CommandEntry {
 	pub env : String,
@@ -12,6 +56,7 @@ pub struct CommandEntry {
 	pub output : String,
 	pub error : String,
 }
+
 
 impl Default for CommandEntry {
     fn default() -> Self {
@@ -23,6 +68,7 @@ impl Default for CommandEntry {
         }
     }
 }
+
 
 pub fn loaded() {
 	println!("Tools loaded");
