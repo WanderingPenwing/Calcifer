@@ -55,6 +55,20 @@ pub struct Tab {
 	pub path : PathBuf,
 	pub code : String,
 	pub language : String,
+	pub saved : bool,
+	pub history : Vec<String>,
+}
+
+impl Default for Tab {
+	fn default() -> Self {
+		Self {
+			path: "untitled".into(),
+			code: "// Hello there, Master".into(),
+			language: "rs".into(),
+			saved: false,
+			history: vec![],
+		}
+	}
 }
 
 
