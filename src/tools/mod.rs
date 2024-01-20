@@ -1,8 +1,10 @@
 //use eframe::egui;
 //use std::io;
 use std::{process::Command, cmp::Ordering, env, path::PathBuf};
+use egui_code_editor::Syntax;
 //use std::fs;
 
+pub mod themes;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TabNumber {
@@ -20,7 +22,7 @@ pub enum TabNumber {
 
 
 impl TabNumber {
-    pub fn get_from_n( n: usize) -> TabNumber {
+    pub fn from_n(n : usize) -> TabNumber {
         match n {
             0 => TabNumber::Zero,
             1 => TabNumber::One,
@@ -33,6 +35,19 @@ impl TabNumber {
             _ => TabNumber::None,
         }
     }
+    pub fn to_n(&self) -> usize {
+		match self {
+			TabNumber::Zero => 0,
+            TabNumber::One => 1,
+            TabNumber::Two => 2,
+            TabNumber::Three => 3,
+            TabNumber::Four => 4,
+            TabNumber::Five => 5,
+            TabNumber::Six => 6,
+            TabNumber::Seven => 7,
+            _ => 0,
+		}
+	}
 }
 
 
@@ -72,6 +87,15 @@ impl Default for CommandEntry {
 
 pub fn loaded() {
 	println!("Tools loaded");
+}
+
+
+pub fn to_syntax(language : &str) -> Syntax {
+	match language {
+		"py" => Syntax::python(),
+		"rs" => Syntax::rust(),
+		_ => Syntax::shell(),
+	}
 }
 
 

@@ -2,7 +2,8 @@
 mod tools;
 
 use eframe::egui;
-use std::{path::Path, fs, io, env};
+use egui_code_editor::{CodeEditor, ColorTheme};
+use std::{path::Path, fs, io, env, cmp::max};
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
@@ -20,54 +21,81 @@ fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "Calcifer",
         options,
-        Box::new(|_cc| Box::<MyApp>::default()),
+        Box::new(|_cc| Box::<Calcifer>::default()),
     )
 }
 
 
-struct MyApp {
-    picked_path: Option<String>,
-    language: String,
-    code: String,
+struct Calcifer {
     selected_tab : tools::TabNumber,
     tabs: Vec<tools::Tab>,
     command: String,
     command_history: Vec<tools::CommandEntry>,
+    theme: ColorTheme,
 }
 
 
-impl Default for MyApp {
+impl Default for Calcifer {
     fn default() -> Self {
         Self {
-            picked_path: None,
-            language: "rs".into(),
-            code: "// write here".into(),
-            selected_tab : tools::TabNumber::None,
-			tabs: Vec::new(),
+            selected_tab : tools::TabNumber::Zero,
+			tabs: vec![ tools::Tab {
+				path: "untitled".into(),
+				code: "// Hello there, Master".into(),
+				language: "rs".into(),
+			}],
             command: "".into(),
             command_history: Vec::new(),
+            theme: tools::themes::CustomColorTheme::fire()
         }
     }
 }
 
 
-impl eframe::App for MyApp {
+impl eframe::App for Calcifer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+		self.draw_settings(ctx);
         self.draw_tree_panel(ctx);
         self.draw_terminal_panel(ctx);
         self.draw_tab_panel(ctx);
-        self.draw_code_panel(ctx);
+        self.draw_content_panel(ctx);
     }
 }
 
-impl MyApp {
+impl Calcifer {
+	fn draw_settings(&mut self, ctx: &egui::Context) {
+		egui::TopBottomPanel::top("settings")
+			.resizable(false)
+			.show(ctx, |ui| {
+				ui.horizontal(|ui| {
+					ui.label("Theme ");
+					egui::ComboBox::from_label("")
+						.selected_text(format!("{}", self.theme.name))
+						.show_ui(ui, |ui| {
+							ui.style_mut().wrap = Some(false);
+							ui.set_min_width(60.0);
+							ui.selectable_value(&mut self.theme, ColorTheme::SONOKAI, "Sonokai");
+							ui.selectable_value(&mut self.theme, ColorTheme::AYU_DARK, "Ayu Dark");
+							ui.selectable_value(&mut self.theme, ColorTheme::AYU_MIRAGE, "Ayu Mirage");
+							ui.selectable_value(&mut self.theme, ColorTheme::GITHUB_DARK, "Github Dark");
+							ui.selectable_value(&mut self.theme, ColorTheme::GRUVBOX, "Gruvbox");
+							ui.selectable_value(&mut self.theme, tools::themes::CustomColorTheme::fire(), "Fire");
+						});
+				});
+			});
+	}
+	
     fn draw_tree_panel(&mut self, ctx: &egui::Context) {
         egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
 			ui.heading("Bookshelf");
+			if ui.add(egui::Button::new("open file")).clicked() {
+				if let Some(path) = rfd::FileDialog::new().pick_file() {
+					self.selected_tab = self.open_file(&path);
+				}
+			}
 			ui.separator();
 			let _ = self.list_files(ui, Path::new("/home/penwing/Documents/"));
 			ui.separator();
-			//~ tools::test(&self);
 		});
     }
 
@@ -79,6 +107,7 @@ impl MyApp {
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                     ui.label("");
                     ui.horizontal(|ui| {
+						ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_hex("#101010").expect("Could not convert color");
                         let Self { command, .. } = self;
                         ui.label(format!("{}>", env::current_dir().expect("Could not find Shell Environnment").file_name().expect("Could not get Shell Environnment Name").to_string_lossy().to_string()));
                         let response = ui.add(egui::TextEdit::singleline(command).desired_width(f32::INFINITY).lock_focus(true));
@@ -95,7 +124,6 @@ impl MyApp {
 							ui.separator();
 							ui.horizontal_wrapped(|ui| {
 								ui.spacing_mut().item_spacing.y = 0.0;
-								//ui.label(self.command_history.clone());
 								for entry in &self.command_history {
 									ui.label(format!("{}> {}", entry.env, entry.command));
 									ui.end_row();
@@ -121,53 +149,47 @@ impl MyApp {
 			.show(ctx, |ui| {
 				ui.horizontal(|ui| {
 					for (index, tab) in self.tabs.iter().enumerate() {
-						ui.selectable_value(&mut self.selected_tab, tools::TabNumber::get_from_n(index), tab.get_name());
+						ui.selectable_value(&mut self.selected_tab, tools::TabNumber::from_n(index), tab.get_name());
 					}
-					if tools::TabNumber::get_from_n(self.tabs.len()) != tools::TabNumber::None {
+					if tools::TabNumber::from_n(self.tabs.len()) != tools::TabNumber::None {
 						ui.selectable_value(&mut self.selected_tab, tools::TabNumber::Open, "+");
 					}
 					if self.selected_tab == tools::TabNumber::Open {
-						if let Some(path) = rfd::FileDialog::new().pick_file() {
-							self.selected_tab = self.open_file(&path);
-						} else {
-							self.selected_tab = tools::TabNumber::None;
-						}
+						self.selected_tab = self.new_tab();
 					}
 				});
 			});
 	}
 
-    fn draw_code_panel(&mut self, ctx: &egui::Context) {
+    fn draw_content_panel(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            if let Some(picked_path) = &self.picked_path {
-                ui.horizontal(|ui| {
-                    ui.label("Picked file:");
-                    ui.monospace(picked_path);
-                });
-            }
-
-            let Self { language, code, .. } = self;
-            let theme = egui_extras::syntax_highlighting::CodeTheme::from_memory(ui.ctx());
-            let mut layouter = |ui: &egui::Ui, string: &str, wrap_width: f32| {
-                let mut layout_job = egui_extras::syntax_highlighting::highlight(ui.ctx(), &theme, string, language);
-                layout_job.wrap.max_width = wrap_width;
-                ui.fonts(|f| f.layout_job(layout_job))
-            };
-
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.add(
-                    egui::TextEdit::multiline(code)
-                        .font(egui::FontId::monospace(60.0)) // for cursor height
-                        .code_editor()
-                        .lock_focus(true)
-                        .desired_rows(80)
-                        .lock_focus(true)
-                        .desired_width(f32::INFINITY)
-                        .layouter(&mut layouter),
-                );
-            });
+            ui.horizontal(|ui| {
+				ui.label("Picked file:");
+				ui.monospace(self.tabs[self.selected_tab.to_n()].path.to_string_lossy().to_string());
+			});
+			
+			if self.selected_tab == tools::TabNumber::None {
+				return
+			}
+			
+			self.draw_code_file(ui);
         });
     }
+    
+    fn draw_code_file(&mut self, ui: &mut egui::Ui) {
+		let lines = self.tabs[self.selected_tab.to_n()].code.chars().filter(|&c| c == '\n').count() + 1;
+		
+		egui::ScrollArea::vertical().show(ui, |ui| {
+			CodeEditor::default()
+					  .id_source("code editor")
+					  .with_rows(max(80, lines))
+					  .with_fontsize(14.0)
+					  .with_theme(self.theme)
+					  .with_syntax(tools::to_syntax(&self.tabs[self.selected_tab.to_n()].language))
+					  .with_numlines(true)
+					  .show(ui, &mut self.tabs[self.selected_tab.to_n()].code);
+		});
+	}
     
     fn list_files(&mut self, ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
 		if let Some(name) = path.file_name() {
@@ -195,22 +217,28 @@ impl MyApp {
 	}
 	
 	fn open_file(&mut self, path: &Path) -> tools::TabNumber {
-		if tools::TabNumber::get_from_n(self.tabs.len()) == tools::TabNumber::None {
+		if tools::TabNumber::from_n(self.tabs.len()) == tools::TabNumber::None {
 			return tools::TabNumber::None
 		}
-		self.picked_path = Some(path.display().to_string());
-		let file_path = Path::new(self.picked_path.as_deref().unwrap_or_default());
-		self.code = fs::read_to_string(file_path).expect("Not able to read the file");
-		self.language = file_path.to_str().unwrap().split('.').last().unwrap().into();
 		
 		let new_tab = tools::Tab {
 			path: path.into(),
-			code: fs::read_to_string(file_path).expect("Not able to read the file"),
-			language: file_path.to_str().unwrap().split('.').last().unwrap().into(),
+			code: fs::read_to_string(path).expect("Not able to read the file"),
+			language: path.to_str().unwrap().split('.').last().unwrap().into(),
 		};
 		self.tabs.push(new_tab);
 		
-		return tools::TabNumber::get_from_n(self.tabs.len() - 1)
+		return tools::TabNumber::from_n(self.tabs.len() - 1)
+	}
+	
+	fn new_tab(&mut self) -> tools::TabNumber {
+		let new_tab = tools::Tab {
+			path: "untitled".into(),
+			code: "// Hello there, Master".into(),
+			language: "rs".into(),
+		};
+		self.tabs.push(new_tab);
+		return tools::TabNumber::from_n(self.tabs.len() - 1)
 	}
 }
 

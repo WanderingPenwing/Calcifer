@@ -13,4 +13,5 @@ env_logger = { version = "0.10.1", default-features = false, features = [
 ] }
 rfd = "0.12.1"
 egui_extras = { version = "0.25.0" }
+egui_code_editor = "0.2.3"
 #syntect = "4.6"

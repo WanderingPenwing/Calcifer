@@ -567,6 +567,7 @@ name = "calcifer"
 version = "0.1.0"
 dependencies = [
  "eframe",
+ "egui_code_editor",
  "egui_extras",
  "env_logger",
  "rfd",
@@ -902,6 +903,15 @@ dependencies = [
  "web-time",
  "webbrowser",
  "winit",
+]
+
+[[package]]
+name = "egui_code_editor"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd3d41044cbf017fde94efde48b19637f63d94fa46dd6e41913cfeed74f023bc"
+dependencies = [
+ "egui",
 ]
 
 [[package]]
