@@ -50,7 +50,7 @@ impl TabNumber {
 	}
 }
 
-
+#[derive(Clone)]
 pub struct Tab {
 	pub path : PathBuf,
 	pub code : String,

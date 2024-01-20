@@ -3,7 +3,7 @@ mod tools;
 
 use eframe::egui;
 use egui_code_editor::{CodeEditor, ColorTheme};
-use std::{path::Path, fs, io, env, cmp::max};
+use std::{path::Path, fs, io, env, cmp::max, cmp::min};
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
@@ -80,6 +80,7 @@ impl Calcifer {
 							ui.selectable_value(&mut self.theme, ColorTheme::GITHUB_DARK, "Github Dark");
 							ui.selectable_value(&mut self.theme, ColorTheme::GRUVBOX, "Gruvbox");
 							ui.selectable_value(&mut self.theme, tools::themes::CustomColorTheme::fire(), "Fire");
+							ui.selectable_value(&mut self.theme, tools::themes::CustomColorTheme::ash(), "Ash");
 						});
 				});
 			});
@@ -147,9 +148,14 @@ impl Calcifer {
 		egui::TopBottomPanel::top("tabs")
 			.resizable(false)
 			.show(ctx, |ui| {
-				ui.horizontal(|ui| {
-					for (index, tab) in self.tabs.iter().enumerate() {
+				ui.horizontal(|ui| {//ffad69 #ff8724 #c46110
+					ui.style_mut().visuals.selection.bg_fill = egui::Color32::from_hex("#b56524").expect("Could not convert color");
+					for (index, tab) in self.tabs.clone().iter().enumerate() {
 						ui.selectable_value(&mut self.selected_tab, tools::TabNumber::from_n(index), tab.get_name());
+						if ui.link("X").clicked() {
+							self.selected_tab = self.delete_tab(index);
+						}
+						ui.separator();
 					}
 					if tools::TabNumber::from_n(self.tabs.len()) != tools::TabNumber::None {
 						ui.selectable_value(&mut self.selected_tab, tools::TabNumber::Open, "+");
@@ -239,6 +245,11 @@ impl Calcifer {
 		};
 		self.tabs.push(new_tab);
 		return tools::TabNumber::from_n(self.tabs.len() - 1)
+	}
+	
+	fn delete_tab(&mut self, index : usize) -> tools::TabNumber {
+		self.tabs.remove(index);
+		return tools::TabNumber::from_n(min(index, self.tabs.len() - 1))
 	}
 }
 
