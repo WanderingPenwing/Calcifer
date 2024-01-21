@@ -21,7 +21,7 @@ pub enum TabNumber {
 
 
 impl TabNumber {
-    pub fn from_n(n : usize) -> TabNumber {
+    pub fn from_index(n : usize) -> TabNumber {
         match n {
             0 => TabNumber::Zero,
             1 => TabNumber::One,
@@ -34,7 +34,7 @@ impl TabNumber {
             _ => TabNumber::None,
         }
     }
-    pub fn to_n(&self) -> usize {
+    pub fn to_index(&self) -> usize {
 		match self {
 			TabNumber::Zero => 0,
             TabNumber::One => 1,
@@ -117,9 +117,7 @@ pub fn save_state(state: &AppState, file_path: &str) -> Result<(), std::io::Erro
 pub fn load_state(file_path: &str) -> Result<AppState, std::io::Error> {
     let serialized_state = read_to_string(file_path)?;
 
-    let state: AppState = serde_json::from_str(&serialized_state)?;
-
-    Ok(state)
+    Ok(serde_json::from_str(&serialized_state)?)
 }
 
 
