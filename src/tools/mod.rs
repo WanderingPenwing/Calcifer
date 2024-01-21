@@ -163,7 +163,7 @@ pub fn run_command(cmd : String) -> CommandEntry {
 	
 	entry.command = cmd;
 	entry.output = (&String::from_utf8_lossy(&output.stdout)).to_string();
-	entry.error = (&String::from_utf8_lossy(&output.stdout)).to_string();
+	entry.error = (&String::from_utf8_lossy(&output.stderr)).to_string();
 	
 	entry
 }
