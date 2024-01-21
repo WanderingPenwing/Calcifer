@@ -3,7 +3,7 @@ mod tools;
 
 use eframe::egui;
 use egui_code_editor::{CodeEditor, ColorTheme};
-use std::{path::Path, path::PathBuf, fs, io, env, cmp::max, cmp::min};
+use std::{path::Path, path::PathBuf, fs, io, env, cmp::max, cmp::min, sync::Arc};
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
@@ -12,11 +12,14 @@ const HISTORY_LENGTH : usize = 2;
 
 fn main() -> Result<(), eframe::Error> {
 	tools::loaded();
+	
+	let icon_data = tools::load_icon();
+	
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1200.0, 800.0])
-            .with_drag_and_drop(true),
+			.with_icon(Arc::new(icon_data)),
         ..Default::default()
     };
     eframe::run_native(
@@ -55,6 +58,7 @@ impl eframe::App for Calcifer {
 			if let Some(path) = self.save_tab() {
 				println!("File saved successfully at: {:?}", path);
 				self.tabs[self.selected_tab.to_n()].path = path;
+				self.tabs[self.selected_tab.to_n()].saved = true;
 			} else {
 				println!("File save failed.");
 			}
@@ -64,6 +68,7 @@ impl eframe::App for Calcifer {
 			if let Some(path) = self.save_tab_as() {
 				println!("File saved successfully at: {:?}", path);
 				self.tabs[self.selected_tab.to_n()].path = path;
+				self.tabs[self.selected_tab.to_n()].saved = true;
 			} else {
 				println!("File save failed.");
 			}
@@ -128,7 +133,7 @@ impl Calcifer {
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                     ui.label("");
                     ui.horizontal(|ui| {
-						ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_hex("#101010").expect("Could not convert color");
+						ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_hex(self.theme.bg).expect("Could not convert color");
                         let Self { command, .. } = self;
                         ui.label(format!("{}>", env::current_dir().expect("Could not find Shell Environnment").file_name().expect("Could not get Shell Environnment Name").to_string_lossy().to_string()));
                         let response = ui.add(egui::TextEdit::singleline(command).desired_width(f32::INFINITY).lock_focus(true));
@@ -169,14 +174,20 @@ impl Calcifer {
 			.resizable(false)
 			.show(ctx, |ui| {
 				ui.horizontal(|ui| {
-					ui.style_mut().visuals.selection.bg_fill = egui::Color32::from_hex("#b56524").expect("Could not convert color");
-					ui.style_mut().visuals.hyperlink_color = egui::Color32::from_hex("#ffad69").expect("Could not convert color");
+					ui.style_mut().visuals.selection.bg_fill = egui::Color32::from_hex(self.theme.functions).expect("Could not convert color");
+					ui.style_mut().visuals.hyperlink_color = egui::Color32::from_hex(self.theme.functions).expect("Could not convert color");
 					for (index, tab) in self.tabs.clone().iter().enumerate() {
 						let mut title = tab.get_name();
 						if !tab.saved {
 							title += " ~";
 						}
+						if self.selected_tab == tools::TabNumber::from_n(index) {
+							ui.style_mut().visuals.override_text_color = Some(egui::Color32::from_hex(self.theme.bg).expect("Could not convert color"));
+						}
 						ui.selectable_value(&mut self.selected_tab, tools::TabNumber::from_n(index), title);
+						
+						ui.style_mut().visuals.override_text_color = None;
+						
 						if ui.link("X").clicked() {
 							self.selected_tab = self.delete_tab(index);
 						}
