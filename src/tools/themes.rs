@@ -44,4 +44,34 @@ impl CustomColorTheme {
 
         theme
     }
+    
+    pub fn from_index(n : usize) -> ColorTheme {
+		match n {
+			0 => ColorTheme::SONOKAI,
+			1 => ColorTheme::GRUVBOX,
+			2 => ColorTheme::GITHUB_DARK,
+			3 => ColorTheme::AYU_MIRAGE,
+			4 => ColorTheme::AYU_DARK,
+			5 => CustomColorTheme::ash(),
+			6 => CustomColorTheme::fire(),
+			_ => CustomColorTheme::ash(),
+		}
+	}
+	
+	pub fn max() -> usize {
+		7
+	}
+	
+	pub fn to_index(theme : ColorTheme) -> usize {
+		match theme.name {
+			"Sonokai" => 0,
+			"Gruvbox" => 1,
+			"Github Dark" => 2,
+			"Ayu Mirage" => 3,
+			"Ayu Dark" => 4,
+			"Ash" => 5,
+			"Fire" => 6,
+			_ => 0,
+		}
+	}
 }

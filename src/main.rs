@@ -8,6 +8,7 @@ use std::{path::Path, path::PathBuf, fs, io, env, cmp::max, cmp::min, sync::Arc}
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
 const HISTORY_LENGTH : usize = 2;
+const SAVE_PATH : &str = "calcifer_save.json";
 
 
 fn main() -> Result<(), eframe::Error> {
@@ -22,10 +23,22 @@ fn main() -> Result<(), eframe::Error> {
 			.with_icon(Arc::new(icon_data)),
         ..Default::default()
     };
+    
+    let app_state: tools::AppState;
+    // Attempt to load previous state
+    if Path::new(SAVE_PATH).exists() {
+        app_state = tools::load_state(SAVE_PATH).expect("Failed to load the save");
+    } else {
+        app_state = tools::AppState {
+            tabs: vec![],
+            theme: 0,
+        };
+    }
+
     eframe::run_native(
         "Calcifer",
         options,
-        Box::new(|_cc| Box::<Calcifer>::default()),
+        Box::new(move |_cc| Box::from(Calcifer::from_app_state(app_state))),
     )
 }
 
@@ -84,6 +97,10 @@ impl eframe::App for Calcifer {
         self.draw_tab_panel(ctx);
         self.draw_content_panel(ctx);
 	}
+	
+	fn on_exit(&mut self, _gl : std::option::Option<&eframe::glow::Context>) {
+		self.save_state();
+	}
 }
 
 
@@ -99,13 +116,10 @@ impl Calcifer {
 						.show_ui(ui, |ui| {
 							ui.style_mut().wrap = Some(false);
 							ui.set_min_width(60.0);
-							ui.selectable_value(&mut self.theme, ColorTheme::SONOKAI, "Sonokai");
-							ui.selectable_value(&mut self.theme, ColorTheme::AYU_DARK, "Ayu Dark");
-							ui.selectable_value(&mut self.theme, ColorTheme::AYU_MIRAGE, "Ayu Mirage");
-							ui.selectable_value(&mut self.theme, ColorTheme::GITHUB_DARK, "Github Dark");
-							ui.selectable_value(&mut self.theme, ColorTheme::GRUVBOX, "Gruvbox");
-							ui.selectable_value(&mut self.theme, tools::themes::CustomColorTheme::fire(), "Fire");
-							ui.selectable_value(&mut self.theme, tools::themes::CustomColorTheme::ash(), "Ash");
+							for i in 0..tools::themes::CustomColorTheme::max() {
+								let theme = tools::themes::CustomColorTheme::from_index(i);
+								ui.selectable_value(&mut self.theme, theme, theme.name);
+							}
 						});
 				});
 			});
@@ -328,6 +342,41 @@ impl Calcifer {
 		}
 		current_tab.code = current_tab.history[current_tab.history.len() - 2].clone();
 		current_tab.history.pop();
+	}
+	
+	pub fn from_app_state(app_state: tools::AppState) -> Self {
+		let mut new = Self::default();
+        new.theme = tools::themes::CustomColorTheme::from_index(app_state.theme);
+        
+        new.tabs = vec![];
+        
+        for path in app_state.tabs {
+			if path.file_name().expect("Could not get Tab Name").to_string_lossy().to_string() != "untitled" {
+				new.open_file(&path);
+			}
+		}
+		
+		if new.tabs == vec![] {
+			new.new_tab();
+		}
+		
+        new
+    }
+    
+    fn save_state(&self) {
+		let state_theme = tools::themes::CustomColorTheme::to_index(self.theme);
+		
+		let mut state_tabs = vec![];
+		
+		for tab in &self.tabs {
+			state_tabs.push(tab.path.clone());
+		}
+		let app_state = tools::AppState {
+            tabs: state_tabs,
+            theme: state_theme,
+        };
+		
+		let _ = tools::save_state(&app_state, SAVE_PATH);
 	}
 }
 

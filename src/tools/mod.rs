@@ -1,9 +1,7 @@
-//use eframe::egui;
-//use std::io;
-use std::{process::Command, cmp::Ordering, env, path::PathBuf};
+use std::{process::Command, cmp::Ordering, env, path::PathBuf, fs::read_to_string, fs::write};
 use egui_code_editor::Syntax;
 use eframe::egui::IconData;
-//use std::fs;
+use serde::{Serialize, Deserialize};
 
 pub mod themes;
 
@@ -51,7 +49,7 @@ impl TabNumber {
 	}
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Tab {
 	pub path : PathBuf,
 	pub code : String,
@@ -97,6 +95,31 @@ impl Default for CommandEntry {
 			error : "".into(),
         }
     }
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub struct AppState {
+    pub tabs: Vec<PathBuf>,
+    pub theme: usize,
+}
+
+
+pub fn save_state(state: &AppState, file_path: &str) -> Result<(), std::io::Error> {
+    let serialized_state = serde_json::to_string(state)?;
+
+    write(file_path, serialized_state)?;
+
+    Ok(())
+}
+
+
+pub fn load_state(file_path: &str) -> Result<AppState, std::io::Error> {
+    let serialized_state = read_to_string(file_path)?;
+
+    let state: AppState = serde_json::from_str(&serialized_state)?;
+
+    Ok(state)
 }
 
 
