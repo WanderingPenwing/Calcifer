@@ -1,4 +1,5 @@
 use eframe::egui;
+use eframe::egui::{text::CCursor, text_edit::CCursorRange};
 use std::{env, path::Path, path::PathBuf, cmp::max, io, fs, cmp::min};
 use crate::tools;
 use crate::tools::themes::CustomColorTheme;
@@ -119,7 +120,7 @@ impl super::Calcifer {
 	}
 
     pub fn draw_content_panel(&mut self, ctx: &egui::Context) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+		egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
 				ui.label("Picked file:");
 				ui.monospace(self.tabs[self.selected_tab.to_index()].path.to_string_lossy().to_string());
@@ -216,7 +217,7 @@ impl super::Calcifer {
 		let lines = current_tab.code.chars().filter(|&c| c == '\n').count() + 1;
 		
 		egui::ScrollArea::vertical().show(ui, |ui| {
-			CodeEditor::default()
+			let mut output = CodeEditor::default()
 					  .id_source("code editor")
 					  .with_rows(max(80, lines))
 					  .with_fontsize(14.0)
@@ -224,6 +225,14 @@ impl super::Calcifer {
 					  .with_syntax(tools::to_syntax(&current_tab.language))
 					  .with_numlines(true)
 					  .show(ui, &mut current_tab.code);
+			if !self.search.result_selected {
+				output.state.set_ccursor_range(Some(CCursorRange::two(
+    				CCursor::new(self.search.get_cursor_start()),
+    				CCursor::new(self.search.get_cursor_end()),
+				)));
+				println!("Changed Cursor : from {} to {}", self.search.get_cursor_start(), self.search.get_cursor_end());
+				self.search.result_selected = true;
+			}
 		});
 		
 		if current_tab.history.len() < 1 {

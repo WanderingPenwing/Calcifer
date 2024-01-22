@@ -104,6 +104,11 @@ impl eframe::App for Calcifer {
 		if self.searching {
 			self.search.show(ctx, &mut self.searching, &mut self.tabs, &mut self.selected_tab);
 		}
+
+		if !self.search.tab_selected && self.search.get_tab() != self.selected_tab {
+			self.selected_tab = self.search.get_tab();
+		}
+		self.search.tab_selected = true;
 	}
 	
 	fn on_exit(&mut self, _gl : std::option::Option<&eframe::glow::Context>) {

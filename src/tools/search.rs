@@ -32,10 +32,15 @@ impl Default for Selection {
 pub struct SearchWindow {
     search_text: String,
 	searched_text: String,
-	results: Vec<Selection>,
-	current_result: Selection,
-	across_documents: bool,
 	replace_text: String,
+
+	across_documents: bool,
+
+	results: Vec<Selection>,
+	current_result: usize,
+
+	pub tab_selected: bool,
+	pub result_selected: bool,
 }
 
 
@@ -44,10 +49,15 @@ impl Default for SearchWindow {
         Self {
             search_text: "".into(),
 			searched_text: "".into(),
-			results: vec![],
-			current_result: Selection::default(),
-			across_documents: false,
 			replace_text: "".into(),
+
+			across_documents: false,
+
+			results: vec![],
+			current_result: 0,
+
+			tab_selected: true,
+			result_selected: true,
         }
     }
 }
@@ -115,6 +125,18 @@ impl View for SearchWindow {
 }
 
 impl SearchWindow {
+	pub fn get_tab(&self) -> TabNumber {
+		self.results[self.current_result].tab.clone()
+	}
+
+	pub fn get_cursor_start(&self) -> usize {
+		self.results[self.current_result].start.clone()
+	}
+
+	pub fn get_cursor_end(&self) -> usize {
+		self.results[self.current_result].end.clone()
+	}
+
 	fn search(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
 		let mut search_results: Vec<Selection> = vec![];
 
@@ -130,9 +152,7 @@ impl SearchWindow {
 		self.searched_text = self.search_text.clone();
 		self.results = search_results.clone();
 		
-		if self.results.len() > 0 {
-			self.current_result = self.results[0].clone();
-		}
+		self.current_result = 0;
 	}
 
 	fn match_text(&self, tab_text: String, tab_number: TabNumber) -> Vec<Selection> {
@@ -148,8 +168,12 @@ impl SearchWindow {
 	fn find_next(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
 		if self.searched_text != self.search_text && self.search_text.len() > 1 {
 			self.search(tabs, selected_tab);
-		} else {
-			println!("just need to get next result");
+		} else if self.results.len() > 1 {
+			self.current_result = (self.current_result.clone() + 1) % self.results.len();
+			self.result_selected = false;
+			if self.results[self.current_result].tab != *selected_tab {
+				self.tab_selected = false;
+			}
 		}
 	}
 
@@ -157,11 +181,15 @@ impl SearchWindow {
 		if self.searched_text != self.search_text && self.search_text.len() > 1 {
 			self.search(tabs, selected_tab);
 		} else {
-			println!("just need to get next result");
+			self.current_result = (self.current_result.clone() - 1 + self.results.len()) % self.results.len();
+			self.result_selected = false;
+			if self.results[self.current_result].tab != *selected_tab {
+				self.tab_selected = false;
+			}
 		}
 	}
 
 	fn replace(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
-		println!("Searched to replace {} with {}", &self.search_text, &self.replace_text);
+		println!("Searched to replace {} with {}, tab lang : {} ", &self.search_text, &self.replace_text, tabs[TabNumber::to_index(selected_tab)].language);
 	}
 }
