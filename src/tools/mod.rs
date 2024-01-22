@@ -8,7 +8,7 @@ pub mod search;
 
 
 pub trait View {
-    fn ui(&mut self, ui: &mut egui::Ui);
+    fn ui(&mut self, ui: &mut egui::Ui, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber);
 }
 
 /// Something to view
@@ -26,7 +26,7 @@ pub trait Demo {
 }
 
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TabNumber {
 	None,
 	Open,
