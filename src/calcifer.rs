@@ -1,9 +1,13 @@
 use eframe::egui;
-use eframe::egui::{text::CCursor, text_edit::CCursorRange};
+//use egui::{text::CCursor, text_edit::CCursorRange};
 use std::{env, path::Path, path::PathBuf, cmp::max, io, fs, cmp::min};
 use crate::tools;
-use crate::tools::themes::CustomColorTheme;
-use egui_code_editor::CodeEditor;
+//use tools::themes::CustomColorTheme;
+
+pub mod code_editor;
+use code_editor::CodeEditor;
+use code_editor::themes::DEFAULT_THEMES;
+
 
 
 impl super::Calcifer {
@@ -18,8 +22,7 @@ impl super::Calcifer {
 						.show_ui(ui, |ui| {
 							ui.style_mut().wrap = Some(false);
 							ui.set_min_width(60.0);
-							for i in 0..CustomColorTheme::max() {
-								let theme = CustomColorTheme::from_index(i);
+							for theme in DEFAULT_THEMES {
 								ui.selectable_value(&mut self.theme, theme, theme.name);
 							}
 						});
@@ -119,7 +122,7 @@ impl super::Calcifer {
 			});
 	}
 
-    pub fn draw_content_panel(&mut self, ctx: &egui::Context) {
+	pub fn draw_content_panel(&mut self, ctx: &egui::Context) {
 		egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
 				ui.label("Picked file:");
@@ -134,6 +137,45 @@ impl super::Calcifer {
         });
     }
     
+	fn draw_code_file(&mut self, ui: &mut egui::Ui) {
+		let current_tab = &mut self.tabs[self.selected_tab.to_index()];
+		let lines = current_tab.code.chars().filter(|&c| c == '\n').count() + 1;
+		
+		//let scroll_area = egui::ScrollArea::vertical()
+			//.vertical_scroll_offset(current_tab.scroll_offset)
+			//.show(ui, |ui| {
+		let mut _output = CodeEditor::default()
+					  	.id_source("code editor")
+					 	 .with_rows(max(80, lines))
+					  	.with_fontsize(14.0)
+					  	.with_theme(self.theme)
+					  	.with_syntax(tools::to_syntax(&current_tab.language))
+					  	.with_numlines(true)
+					  	.show(ui, &mut current_tab.code);
+				//if !self.search.result_selected {
+					//output.state.set_ccursor_range(Some(CCursorRange::two(
+    					//CCursor::new(self.search.get_cursor_start()),
+    					//CCursor::new(self.search.get_cursor_end()),
+					//)));
+					//println!("Changed Cursor : from {} to {}", self.search.get_cursor_start(), self.search.get_cursor_end());
+					//self.search.result_selected = true;
+				//}
+			//});
+		//ui.label(format!("Scroll : {}", scroll_area.state.offset.y.clone()));
+		
+		if current_tab.history.len() < 1 {
+			current_tab.history.push(current_tab.code.clone());
+		}
+		
+		if &current_tab.code != current_tab.history.last().expect("There should be an history") {
+			current_tab.history.push(current_tab.code.clone());
+			current_tab.saved = false;
+			if current_tab.history.len() > super::HISTORY_LENGTH {
+				current_tab.history.remove(0);
+			}
+		}
+	}
+
     pub fn save_tab(&self) -> Option<PathBuf> {
 		if self.tabs[self.selected_tab.to_index()].path.file_name().expect("Could not get Tab Name").to_string_lossy().to_string() == "untitled" {
 			return self.save_tab_as();
@@ -178,7 +220,7 @@ impl super::Calcifer {
 	
 	pub fn from_app_state(app_state: tools::AppState) -> Self {
 		let mut new = Self {
-			theme: tools::themes::CustomColorTheme::from_index(app_state.theme),
+			theme: DEFAULT_THEMES[min(app_state.theme, DEFAULT_THEMES.len() - 1)],
 			tabs: Vec::new(),
 			..Default::default()
 		};
@@ -197,7 +239,10 @@ impl super::Calcifer {
     }
     
     pub fn save_state(&self) {
-		let state_theme = tools::themes::CustomColorTheme::to_index(self.theme);
+		let mut state_theme : usize = 0;
+		if let Some(theme) = DEFAULT_THEMES.iter().position(|&r| r == self.theme) {
+			state_theme = theme;
+		}
 		
 		let mut state_tabs = vec![];
 		
@@ -210,42 +255,6 @@ impl super::Calcifer {
         };
 		
 		let _ = tools::save_state(&app_state, super::SAVE_PATH);
-	}
-    
-    fn draw_code_file(&mut self, ui: &mut egui::Ui) {
-		let current_tab = &mut self.tabs[self.selected_tab.to_index()];
-		let lines = current_tab.code.chars().filter(|&c| c == '\n').count() + 1;
-		
-		egui::ScrollArea::vertical().show(ui, |ui| {
-			let mut output = CodeEditor::default()
-					  .id_source("code editor")
-					  .with_rows(max(80, lines))
-					  .with_fontsize(14.0)
-					  .with_theme(self.theme)
-					  .with_syntax(tools::to_syntax(&current_tab.language))
-					  .with_numlines(true)
-					  .show(ui, &mut current_tab.code);
-			if !self.search.result_selected {
-				output.state.set_ccursor_range(Some(CCursorRange::two(
-    				CCursor::new(self.search.get_cursor_start()),
-    				CCursor::new(self.search.get_cursor_end()),
-				)));
-				println!("Changed Cursor : from {} to {}", self.search.get_cursor_start(), self.search.get_cursor_end());
-				self.search.result_selected = true;
-			}
-		});
-		
-		if current_tab.history.len() < 1 {
-			current_tab.history.push(current_tab.code.clone());
-		}
-		
-		if &current_tab.code != current_tab.history.last().expect("There should be an history") {
-			current_tab.history.push(current_tab.code.clone());
-			current_tab.saved = false;
-			if current_tab.history.len() > super::HISTORY_LENGTH {
-				current_tab.history.remove(0);
-			}
-		}
 	}
     
     fn list_files(&mut self, ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
@@ -284,6 +293,7 @@ impl super::Calcifer {
 			language: path.to_str().unwrap().split('.').last().unwrap().into(),
 			saved: true,
 			history: vec![],
+			scroll_offset: 0.0,
 		};
 		self.tabs.push(new_tab);
 		

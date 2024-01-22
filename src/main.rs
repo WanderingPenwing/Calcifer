@@ -1,11 +1,11 @@
-
 mod tools;
 mod calcifer;
 
 use eframe::egui;
-use egui_code_editor::ColorTheme;
+use calcifer::code_editor::ColorTheme;
 use std::{path::Path, sync::Arc};
 use tools::Demo;
+use calcifer::code_editor::themes::DEFAULT_THEMES;
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
@@ -68,7 +68,7 @@ impl Default for Calcifer {
 			command: String::new(),
 			command_history: Vec::new(),
 
-			theme: tools::themes::CustomColorTheme::fire(),
+			theme: DEFAULT_THEMES[0],
 
 			search: tools::search::SearchWindow::default(),
 			searching: false,

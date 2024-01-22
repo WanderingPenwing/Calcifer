@@ -1,9 +1,9 @@
 use std::{process::Command, cmp::Ordering, env, path::PathBuf, fs::read_to_string, fs::write};
-use egui_code_editor::Syntax;
+use crate::calcifer::code_editor::Syntax;
 use eframe::egui;
 use serde::{Serialize, Deserialize};
 
-pub mod themes;
+//pub mod themes;
 pub mod search;
 
 
@@ -77,6 +77,7 @@ pub struct Tab {
 	pub language : String,
 	pub saved : bool,
 	pub history : Vec<String>,
+	pub scroll_offset : f32,
 }
 
 impl Default for Tab {
@@ -87,6 +88,7 @@ impl Default for Tab {
 			language: "rs".into(),
 			saved: false,
 			history: vec![],
+			scroll_offset: 0.0,
 		}
 	}
 }
