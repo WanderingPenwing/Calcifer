@@ -1,9 +1,30 @@
 use std::{process::Command, cmp::Ordering, env, path::PathBuf, fs::read_to_string, fs::write};
 use egui_code_editor::Syntax;
-use eframe::egui::IconData;
+use eframe::egui;
 use serde::{Serialize, Deserialize};
 
 pub mod themes;
+pub mod search;
+
+
+pub trait View {
+    fn ui(&mut self, ui: &mut egui::Ui);
+}
+
+/// Something to view
+pub trait Demo {
+    /// Is the demo enabled for this integraton?
+    fn is_enabled(&self, _ctx: &egui::Context) -> bool {
+        true
+    }
+
+    /// `&'static` so we can also use it as a key to store open/close state.
+    fn name(&self) -> &str; //'static 
+
+    /// Show windows, etc
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber);
+}
+
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TabNumber {
@@ -125,7 +146,7 @@ pub fn loaded() {
 	println!("Tools loaded");
 }
 
-pub fn load_icon() -> IconData {
+pub fn load_icon() -> egui::IconData {
 	let (icon_rgba, icon_width, icon_height) = {
 		let icon = include_bytes!("../../assets/icon.png");
 		let image = image::load_from_memory(icon)
@@ -136,7 +157,7 @@ pub fn load_icon() -> IconData {
 		(rgba, width, height)
 	};
 	
-	IconData {
+	egui::IconData {
 		rgba: icon_rgba,
 		width: icon_width,
 		height: icon_height,
