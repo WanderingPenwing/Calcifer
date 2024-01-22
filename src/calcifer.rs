@@ -2,7 +2,6 @@ use eframe::egui;
 //use egui::{text::CCursor, text_edit::CCursorRange};
 use std::{env, path::Path, path::PathBuf, cmp::max, io, fs, cmp::min};
 use crate::tools;
-//use tools::themes::CustomColorTheme;
 
 pub mod code_editor;
 use code_editor::CodeEditor;
@@ -141,17 +140,14 @@ impl super::Calcifer {
 		let current_tab = &mut self.tabs[self.selected_tab.to_index()];
 		let lines = current_tab.code.chars().filter(|&c| c == '\n').count() + 1;
 		
-		//let scroll_area = egui::ScrollArea::vertical()
-			//.vertical_scroll_offset(current_tab.scroll_offset)
-			//.show(ui, |ui| {
-		let mut _output = CodeEditor::default()
+		let _output = CodeEditor::default()
 					  	.id_source("code editor")
 					 	 .with_rows(max(80, lines))
 					  	.with_fontsize(14.0)
 					  	.with_theme(self.theme)
 					  	.with_syntax(tools::to_syntax(&current_tab.language))
 					  	.with_numlines(true)
-					  	.show(ui, &mut current_tab.code);
+					  	.show(ui, &mut current_tab.code, &mut current_tab.scroll_offset);
 				//if !self.search.result_selected {
 					//output.state.set_ccursor_range(Some(CCursorRange::two(
     					//CCursor::new(self.search.get_cursor_start()),
@@ -161,7 +157,7 @@ impl super::Calcifer {
 					//self.search.result_selected = true;
 				//}
 			//});
-		//ui.label(format!("Scroll : {}", scroll_area.state.offset.y.clone()));
+		ui.label(format!("Scroll : {}", current_tab.scroll_offset));
 		
 		if current_tab.history.len() < 1 {
 			current_tab.history.push(current_tab.code.clone());

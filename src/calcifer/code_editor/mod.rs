@@ -187,8 +187,8 @@ impl CodeEditor {
 
     //#[cfg(feature = "egui")]
     /// Show Code Editor
-    pub fn show(&mut self, ui: &mut egui::Ui, text: &mut String) -> TextEditOutput {
-        let mut text_edit_output: Option<TextEditOutput> = None;
+    pub fn show(&mut self, ui: &mut egui::Ui, text: &mut String, vertical_offset: &mut f32) -> f32 {
+        //let mut text_edit_output: Option<TextEditOutput> = None;
         let mut code_editor = |ui: &mut egui::Ui| {
             ui.horizontal_top(|h| {
                 self.theme.modify_style(h, self.fontsize);
@@ -202,7 +202,7 @@ impl CodeEditor {
                             let layout_job = highlight(ui.ctx(), self, string);
                             ui.fonts(|f| f.layout_job(layout_job))
                         };
-                        let output = egui::TextEdit::multiline(text)
+                        let _output = egui::TextEdit::multiline(text)
                             .id_source(&self.id)
                             .lock_focus(true)
                             .desired_rows(self.rows)
@@ -210,19 +210,23 @@ impl CodeEditor {
                             .desired_width(if self.shrink { 0.0 } else { f32::MAX })
                             .layouter(&mut layouter)
                             .show(ui);
-                        text_edit_output = Some(output);
+                        //text_edit_output = Some(output);
                     });
             });
         };
         if self.vscroll {
-            egui::ScrollArea::vertical()
+            let scroll_area = egui::ScrollArea::vertical()
                 .id_source(format!("{}_outer_scroll", self.id))
                 .stick_to_bottom(self.stick_to_bottom)
+				.vertical_scroll_offset(vertical_offset.clone())
+				//.enable_scrolling(false)
                 .show(ui, code_editor);
+			*vertical_offset = scroll_area.state.offset.y.clone();
         } else {
             code_editor(ui);
         }
 
-        text_edit_output.expect("TextEditOutput should exist at this point")
+        //text_edit_output.expect("TextEditOutput should exist at this point")
+		*vertical_offset
     }
 }
