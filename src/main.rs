@@ -38,7 +38,7 @@ fn main() -> Result<(), eframe::Error> {
     }
 
     eframe::run_native(
-        "Calcifer v1.1",
+        "Calcifer v1.0.1",
         options,
         Box::new(move |_cc| Box::from(Calcifer::from_app_state(app_state))),
     )
@@ -94,14 +94,6 @@ impl eframe::App for Calcifer {
 		if ctx.input( |i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {
 			self.searching = !self.searching.clone();
 		}
-
-		//if ctx.input( |i| i.scroll_delta.y > 0.0) {
-			//self.tabs[self.selected_tab.to_index()].scroll_offset += 80.0;
-		//}
-
-		//if ctx.input( |i| i.scroll_delta.y < 0.0) {
-			//self.tabs[self.selected_tab.to_index()].scroll_offset -= 80.0;
-		//}
 		
 		self.draw_settings(ctx);
         self.draw_tree_panel(ctx);
