@@ -29,8 +29,8 @@ impl super::Calcifer {
 			});
 	}
 	
-    pub fn draw_tree_panel(&mut self, ctx: &egui::Context) {
-        egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
+	pub fn draw_tree_panel(&mut self, ctx: &egui::Context) {
+		egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
 			ui.heading("Bookshelf");
 			if ui.add(egui::Button::new("open file")).clicked() {
 				if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -41,29 +41,29 @@ impl super::Calcifer {
 			let _ = self.list_files(ui, Path::new("/home/penwing/Documents/"));
 			ui.separator();
 		});
-    }
+	}
 
-    pub fn draw_terminal_panel(&mut self, ctx: &egui::Context) {
-        egui::TopBottomPanel::bottom("terminal")
-            .default_height(super::TERMINAL_HEIGHT.clone())
-            .min_height(0.0)
-            .show(ctx, |ui| {
-                ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                    ui.label("");
-                    ui.horizontal(|ui| {
+	pub fn draw_terminal_panel(&mut self, ctx: &egui::Context) {
+		egui::TopBottomPanel::bottom("terminal")
+			.default_height(super::TERMINAL_HEIGHT.clone())
+			.min_height(0.0)
+			.show(ctx, |ui| {
+				ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+					ui.label("");
+					ui.horizontal(|ui| {
 						ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_hex(self.theme.bg).expect("Could not convert color");
-                        let Self { command, .. } = self;
-                        ui.label(format!("{}>", env::current_dir().expect("Could not find Shell Environnment").file_name().expect("Could not get Shell Environnment Name").to_string_lossy().to_string()));
-                        let response = ui.add(egui::TextEdit::singleline(command).desired_width(f32::INFINITY).lock_focus(true));
+						let Self { command, .. } = self;
+						ui.label(format!("{}>", env::current_dir().expect("Could not find Shell Environnment").file_name().expect("Could not get Shell Environnment Name").to_string_lossy().to_string()));
+						let response = ui.add(egui::TextEdit::singleline(command).desired_width(f32::INFINITY).lock_focus(true));
 
-                        if response.lost_focus() && ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-                            self.command_history.push(tools::run_command(self.command.clone()));
-                            self.command = "".into();
-                            response.request_focus();
-                        }
-                    });
-                    ui.separator();
-                    egui::ScrollArea::vertical().stick_to_bottom(true).show(ui, |ui| {
+						if response.lost_focus() && ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+							self.command_history.push(tools::run_command(self.command.clone()));
+							self.command = "".into();
+							response.request_focus();
+						}
+					});
+					ui.separator();
+					egui::ScrollArea::vertical().stick_to_bottom(true).show(ui, |ui| {
 						ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
 							ui.separator();
 							ui.horizontal_wrapped(|ui| {
@@ -82,12 +82,12 @@ impl super::Calcifer {
 								}
 							});
 						});
-                    });
-                });
-            });
-    }
-    
-    pub fn draw_tab_panel(&mut self, ctx: &egui::Context) {
+					});
+				});
+			});
+	}
+	
+	pub fn draw_tab_panel(&mut self, ctx: &egui::Context) {
 		egui::TopBottomPanel::top("tabs")
 			.resizable(false)
 			.show(ctx, |ui| {
@@ -123,7 +123,7 @@ impl super::Calcifer {
 
 	pub fn draw_content_panel(&mut self, ctx: &egui::Context) {
 		egui::CentralPanel::default().show(ctx, |ui| {
-            ui.horizontal(|ui| {
+			ui.horizontal(|ui| {
 				ui.label("Picked file:");
 				ui.monospace(self.tabs[self.selected_tab.to_index()].path.to_string_lossy().to_string());
 			});
@@ -133,9 +133,9 @@ impl super::Calcifer {
 			}
 			
 			self.draw_code_file(ui);
-        });
-    }
-    
+		});
+	}
+	
 	fn draw_code_file(&mut self, ui: &mut egui::Ui) {
 		let current_tab = &mut self.tabs[self.selected_tab.to_index()];
 		let lines = current_tab.code.chars().filter(|&c| c == '\n').count() + 1;
@@ -143,8 +143,8 @@ impl super::Calcifer {
 
 		if !self.search.result_selected && self.search.tab_selected {
 			override_cursor = Some(CCursorRange::two(
-    						CCursor::new(self.search.get_cursor_start()),
-    						CCursor::new(self.search.get_cursor_end()),
+							CCursor::new(self.search.get_cursor_start()),
+							CCursor::new(self.search.get_cursor_end()),
 						));
 			self.search.result_selected = true;
 		}
@@ -158,7 +158,7 @@ impl super::Calcifer {
 					  	.show(ui, &mut current_tab.code, &mut current_tab.saved, &mut current_tab.last_cursor, &mut current_tab.scroll_offset, override_cursor);
 	}
 
-    pub fn save_tab(&self) -> Option<PathBuf> {
+	pub fn save_tab(&self) -> Option<PathBuf> {
 		if self.tabs[self.selected_tab.to_index()].path.file_name().expect("Could not get Tab Name").to_string_lossy().to_string() == "untitled" {
 			return self.save_tab_as();
 		} else {
@@ -197,8 +197,8 @@ impl super::Calcifer {
 			tabs: Vec::new(),
 			..Default::default()
 		};
-        
-        for path in app_state.tabs {
+		
+		for path in app_state.tabs {
 			if path.file_name().expect("Could not get Tab Name").to_string_lossy().to_string() != "untitled" {
 				new.open_file(&path);
 			}
@@ -208,10 +208,10 @@ impl super::Calcifer {
 			new.new_tab();
 		}
 		
-        new
-    }
-    
-    pub fn save_state(&self) {
+		new
+	}
+	
+	pub fn save_state(&self) {
 		let mut state_theme : usize = 0;
 		if let Some(theme) = DEFAULT_THEMES.iter().position(|&r| r == self.theme) {
 			state_theme = theme;
@@ -223,14 +223,14 @@ impl super::Calcifer {
 			state_tabs.push(tab.path.clone());
 		}
 		let app_state = tools::AppState {
-            tabs: state_tabs,
-            theme: state_theme,
-        };
+			tabs: state_tabs,
+			theme: state_theme,
+		};
 		
 		let _ = tools::save_state(&app_state, super::SAVE_PATH);
 	}
-    
-    fn list_files(&mut self, ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
+	
+	fn list_files(&mut self, ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
 		if let Some(name) = path.file_name() {
 			if path.is_dir() {
 				egui::CollapsingHeader::new(name.to_string_lossy()).show(ui, |ui| {
@@ -262,7 +262,7 @@ impl super::Calcifer {
 		
 		let new_tab = tools::Tab {
 			path: path.into(),
-			code: fs::read_to_string(path).expect("Not able to read the file").replace("    ", "\t"),
+			code: fs::read_to_string(path).expect("Not able to read the file").replace("	", "\t"),
 			language: path.to_str().unwrap().split('.').last().unwrap().into(),
 			saved: true,
 			..tools::Tab::default()
