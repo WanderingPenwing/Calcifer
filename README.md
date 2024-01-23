@@ -23,4 +23,6 @@ Added indent recognition (when there is a line break, the indentation level is k
 
 
 # 1.0.3 :
+Added testing
 Added Ctrl+T : turn 4 spaces into tab across the whole document
+Added Time debug

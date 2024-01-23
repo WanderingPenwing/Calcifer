@@ -3,7 +3,7 @@ mod calcifer;
 
 use eframe::egui;
 use calcifer::code_editor::ColorTheme;
-use std::{path::Path, sync::Arc, time::Instant};
+use std::{path::Path, sync::Arc, time, thread};
 
 use tools::Demo;
 use calcifer::code_editor::themes::DEFAULT_THEMES;
@@ -12,6 +12,7 @@ const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
 const SAVE_PATH : &str = "calcifer_save.json";
 const TIME_LABELS : [&str; 5] = ["settings", "tree", "terminal", "tabs", "content"];
+const MAX_FPS : f32 = 30.0;
 
 
 fn main() -> Result<(), eframe::Error> {
@@ -60,6 +61,7 @@ struct Calcifer {
 	
 	debug_display: bool,
 	time_watch: Vec<f32>,
+	next_frame: time::Instant,
 }
 
 
@@ -79,6 +81,7 @@ impl Default for Calcifer {
 			
 			debug_display: false,
 			time_watch: vec![0.0; TIME_LABELS.len()],
+			next_frame: time::Instant::now(),
 		}
 	}
 }
@@ -86,7 +89,10 @@ impl Default for Calcifer {
 
 impl eframe::App for Calcifer {
 	fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-		let mut watch = Instant::now();
+		thread::sleep(time::Duration::from_secs_f32(((1.0/MAX_FPS) - self.next_frame.elapsed().as_secs_f32()).max(0.0)));
+		self.next_frame = time::Instant::now();
+		
+		let mut watch = time::Instant::now();
 		
 		if ctx.input( |i| i.key_pressed(egui::Key::S) && i.modifiers.ctrl) {
 			self.handle_save_file(self.save_tab());
@@ -110,22 +116,22 @@ impl eframe::App for Calcifer {
 		self.draw_settings(ctx);
 		
 		self.time_watch[0] = watch.elapsed().as_micros() as f32 / 1000.0;
-		watch = Instant::now();
+		watch = time::Instant::now();
 		
 		self.draw_tree_panel(ctx);
 		
 		self.time_watch[1] = watch.elapsed().as_micros() as f32 / 1000.0;
-		watch = Instant::now();
+		watch = time::Instant::now();
 		
 		self.draw_terminal_panel(ctx);
 		
 		self.time_watch[2] = watch.elapsed().as_micros() as f32 / 1000.0;
-		watch = Instant::now();
+		watch = time::Instant::now();
 		
 		self.draw_tab_panel(ctx);
 		
 		self.time_watch[3] = watch.elapsed().as_micros() as f32 / 1000.0;
-		watch = Instant::now();
+		watch = time::Instant::now();
 		
 		self.draw_content_panel(ctx);
 		
