@@ -268,8 +268,10 @@ impl CodeEditor {
 						let mut extend : isize = 0;
 
 						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-							println!("line break");
-							//get previous line number of tabs, and 2 charcters before cursor
+							if let Some(range) = last_cursor {
+								(*text, extend) = self.new_line(range.clone(), text.clone());
+								get_new_cursor = false;
+							}
 						}
 
 						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::E) && i.modifiers.ctrl) {
@@ -305,16 +307,19 @@ impl CodeEditor {
 							*last_cursor = output.state.clone().ccursor_range();
 						} else {
 							if let Some(cursor_range) = last_cursor.clone() {
-								let start = min(cursor_range.primary.index, cursor_range.secondary.index);
+								let mut start = min(cursor_range.primary.index, cursor_range.secondary.index);
 								let end = max(cursor_range.primary.index, cursor_range.secondary.index);
 								let extended = match end as isize + extend {
         							// Check for overflow or negative result
         							value if value < 0 => 0,
         							value => value as usize,
     							};
+								if start == end {
+									start = extended;
+								}
 								let cursor = Some(CCursorRange {
-									primary : CCursor::new(start),
-									secondary : CCursor::new(max(start, extended)),
+									primary : CCursor::new(start.clone()),
+									secondary : CCursor::new(max(start.clone(), extended)),
 								});
 								output.state.set_ccursor_range(cursor.clone());
 								output.state.store(ui.ctx(), output.response.id);
@@ -408,5 +413,24 @@ impl CodeEditor {
 
 	fn delta_char(&self, text : String, modifier: &str) -> isize {
 		(modifier.len() * text.match_indices(&"\n".to_string()).collect::<Vec<_>>().len()) as isize
+	}
+
+	fn new_line(&self, cursor_range : CCursorRange, text : String) -> (String, isize) {
+		let cursor = min(cursor_range.primary.index, cursor_range.secondary.index);
+
+		let mut last_line_break = max(0, cursor - 1);
+
+		while last_line_break > 0 && text.char_at(last_line_break) != '\n' {
+			last_line_break -= 1;
+		}
+		let indent_depth = text.slice(last_line_break..cursor).match_indices(&"\t".to_string()).collect::<Vec<_>>().len();
+
+		let new_indent_depth = indent_depth.clone();
+		
+		let mut new_text : String = text.clone().slice(..(cursor + 1)).to_string();
+		new_text.push_str(&"\t".repeat(new_indent_depth.clone()));
+		new_text.push_str(text.clone().slice((cursor + 1)..));
+
+		(new_text.clone().to_string(), (new_indent_depth + 1) as isize)
 	}
 }

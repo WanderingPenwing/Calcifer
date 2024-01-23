@@ -262,7 +262,7 @@ impl super::Calcifer {
 		
 		let new_tab = tools::Tab {
 			path: path.into(),
-			code: fs::read_to_string(path).expect("Not able to read the file"),
+			code: fs::read_to_string(path).expect("Not able to read the file").replace("    ", "\t"),
 			language: path.to_str().unwrap().split('.').last().unwrap().into(),
 			saved: true,
 			..tools::Tab::default()
@@ -271,7 +271,7 @@ impl super::Calcifer {
 		
 		return tools::TabNumber::from_index(self.tabs.len() - 1)
 	}
-	
+
 	fn new_tab(&mut self) -> tools::TabNumber {
 		self.tabs.push(tools::Tab::default());
 		return tools::TabNumber::from_index(self.tabs.len() - 1)
