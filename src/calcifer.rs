@@ -147,7 +147,6 @@ impl super::Calcifer {
     						CCursor::new(self.search.get_cursor_end()),
 						));
 			self.search.result_selected = true;
-			println!("Override cursor set : [{}, {}]", self.search.get_cursor_start(), self.search.get_cursor_end());
 		}
 		
 		CodeEditor::default().id_source("code editor")

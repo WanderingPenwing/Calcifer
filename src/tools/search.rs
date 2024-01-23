@@ -182,8 +182,10 @@ impl SearchWindow {
 		self.results = search_results.clone();
 		
 		self.current_result = 0;
-		self.result_selected = false;
-		self.tab_selected = false;
+		if self.results.len() > 0 {
+			self.result_selected = false;
+			self.tab_selected = false;
+		}
 	}
 
 	fn match_text(&self, tab_text: String, tab_number: TabNumber) -> Vec<Selection> {
@@ -220,7 +222,15 @@ impl SearchWindow {
 		}
 	}
 
-	fn replace(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
-		println!("Searched to replace {} with {}, tab lang : {} ", &self.search_text, &self.replace_text, tabs[selected_tab.to_index()].language);
+	fn replace(&mut self, tabs: &mut Vec<Tab>, selected_tab: &TabNumber) {
+		if self.searched_text != self.search_text {
+			self.search(tabs, selected_tab);
+		}
+
+		println!("trying to replace {} with {}", self.search_text, self.replace_text);
+
+		for element in &self.results {
+			tabs[element.tab.to_index()].code = tabs[element.tab.to_index()].code.replace(&self.search_text, &self.replace_text);
+		}
 	}
 }

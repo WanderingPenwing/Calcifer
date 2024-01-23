@@ -210,7 +210,6 @@ impl CodeEditor {
 							output.response.request_focus();
 							output.state.set_ccursor_range(override_cursor);
 							output.state.store(ui.ctx(), output.response.id);
-							println!("Cursor range overriden");
 						}
 
 						//text_edit_output = Some(output);
