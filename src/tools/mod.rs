@@ -1,7 +1,7 @@
 use std::{process::Command, cmp::Ordering, env, path::PathBuf, fs::read_to_string, fs::write};
 use crate::calcifer::code_editor::Syntax;
 use eframe::egui;
-use egui::{text::CCursor, text_edit::CCursorRange};
+use egui::text_edit::CCursorRange;
 use serde::{Serialize, Deserialize};
 
 //pub mod themes;

@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+
 pub mod highlighting;
 mod syntax;
 pub mod themes;
@@ -9,6 +10,60 @@ use highlighting::highlight;
 use std::hash::{Hash, Hasher};
 pub use syntax::{Syntax, TokenType};
 pub use themes::ColorTheme;
+use std::cmp::{min, max};
+use std::ops::{Bound, RangeBounds};
+
+
+trait StringUtils {
+    fn substring(&self, start: usize, len: usize) -> &str;
+    fn slice(&self, range: impl RangeBounds<usize>) -> &str;
+	fn char_at(&self, index: usize) -> char;
+}
+
+impl StringUtils for str {
+    fn substring(&self, start: usize, len: usize) -> &str {
+        let mut char_pos = 0;
+        let mut byte_start = 0;
+        let mut it = self.chars();
+        loop {
+            if char_pos == start { break; }
+            if let Some(c) = it.next() {
+                char_pos += 1;
+                byte_start += c.len_utf8();
+            }
+            else { break; }
+        }
+        char_pos = 0;
+        let mut byte_end = byte_start;
+        loop {
+            if char_pos == len { break; }
+            if let Some(c) = it.next() {
+                char_pos += 1;
+                byte_end += c.len_utf8();
+            }
+            else { break; }
+        }
+        &self[byte_start..byte_end]
+    }
+
+    fn slice(&self, range: impl RangeBounds<usize>) -> &str {
+        let start = match range.start_bound() {
+            Bound::Included(bound) | Bound::Excluded(bound) => *bound,
+            Bound::Unbounded => 0,
+        };
+        let len = match range.end_bound() {
+            Bound::Included(bound) => *bound + 1,
+            Bound::Excluded(bound) => *bound,
+            Bound::Unbounded => self.len(),
+        } - start;
+        self.substring(start, len)
+    }
+	
+	fn char_at(&self, index: usize) -> char {
+        self.chars().nth(index).unwrap_or('\0') // '\0' is used as the default value
+    }
+}
+
 
 #[derive(Clone, Debug, PartialEq)]
 /// CodeEditor struct which stores settings for highlighting.
@@ -293,25 +348,58 @@ impl CodeEditor {
         //text_edit_output.expect("TextEditOutput should exist at this point")
     }
 
-	fn toggle_start_of_line(&self, cursor_range : CCursorRange, text : String, substring : &str) -> String {
-		let mut text_clone = text.clone();
+	fn toggle_start_of_line(&self, cursor_range : CCursorRange, text : String, _head : &str) -> String {
+		let substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
+		let mut new_text : String = "".into();
 		
+		//substring[1] = substring[1].replace("\n".to_string(), "\n".to_string().push_str(head));
+		
+		new_text.push_str(&substring[0].clone());
+		new_text.push_str(&substring[1].clone());
+		new_text.push_str(&substring[2].clone());
 
-		text_clone
+		new_text
 	}
 
 
-	fn add_start_of_line(&self, cursor_range : CCursorRange, text : String, substring : &str) -> String {
-		let mut text_clone = text.clone();
+	fn add_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> String {
+		let mut substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
+		let mut new_text : String = "".into();
 		
+		substring[1] = substring[1].replace(&"\n".to_string(), &format!("\n{}", head));
+		
+		new_text.push_str(&substring[0].clone());
+		new_text.push_str(&substring[1].clone());
+		new_text.push_str(&substring[2].clone());
 
-		text_clone
+		return new_text
 	}
 
-	fn remove_start_of_line(&self, cursor_range : CCursorRange, text : String, substring : &str) -> String {
-		let mut text_clone = text.clone();
+	fn remove_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> String {
+		let mut substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
+		let mut new_text : String = "".into();
 		
+		substring[1] = substring[1].replace(&format!("\n{}", head), &"\n".to_string());
+		
+		new_text.push_str(&substring[0].clone());
+		new_text.push_str(&substring[1].clone());
+		new_text.push_str(&substring[2].clone());
 
-		text_clone
+		return new_text
+	}
+
+	fn get_selection_substring(&self, text : String, cursor_range : CCursorRange) -> Vec<String> {
+		let start = min(cursor_range.primary.index, cursor_range.secondary.index);
+		let end = max(cursor_range.primary.index, cursor_range.secondary.index);
+
+		let mut first_char = start;
+
+		while first_char > 0 && text.char_at(first_char) != '\n' {
+			first_char -= 1;
+		}
+
+		let last_char = end;
+		
+		return vec![text.slice(..first_char).to_string(), text.slice(first_char..last_char).to_string(), text.slice(last_char..).to_string()];
 	}
 }
