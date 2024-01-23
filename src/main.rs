@@ -38,7 +38,7 @@ fn main() -> Result<(), eframe::Error> {
     }
 
     eframe::run_native(
-        "Calcifer v1.0.1",
+        "Calcifer v1.0.2",
         options,
         Box::new(move |_cc| Box::from(Calcifer::from_app_state(app_state))),
     )
@@ -93,6 +93,9 @@ impl eframe::App for Calcifer {
 
 		if ctx.input( |i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {
 			self.searching = !self.searching.clone();
+			if self.searching {
+				self.search.initialized = false;
+			}
 		}
 		
 		self.draw_settings(ctx);
@@ -107,6 +110,7 @@ impl eframe::App for Calcifer {
 
 		if !self.search.tab_selected && self.search.get_tab() != self.selected_tab {
 			self.selected_tab = self.search.get_tab();
+			println!("changed tab to {}", self.selected_tab.to_index());
 		}
 		self.search.tab_selected = true;
 	}

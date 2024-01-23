@@ -1,11 +1,14 @@
 use eframe::egui;
 use crate::tools::{View, Demo, Tab, TabNumber};
+use std::{cmp::min};
+use crate::RED;
 
 
 enum Action {
 	Next,
 	Previous,
 	Replace,
+	Update,
 	None,
 }
 
@@ -34,6 +37,8 @@ pub struct SearchWindow {
 	searched_text: String,
 	replace_text: String,
 
+	pub initialized: bool,
+
 	across_documents: bool,
 
 	results: Vec<Selection>,
@@ -50,6 +55,8 @@ impl Default for SearchWindow {
             search_text: "".into(),
 			searched_text: "".into(),
 			replace_text: "".into(),
+			
+			initialized: false,
 
 			across_documents: false,
 
@@ -86,13 +93,31 @@ impl View for SearchWindow {
 
 		ui.horizontal(|ui| {
 			let Self { search_text, .. } = self;
-			ui.add(egui::TextEdit::singleline(search_text).desired_width(120.0).lock_focus(true));
-
-			ui.label(format!("{} ", self.results.len()));
+			
+			let response = ui.add(egui::TextEdit::singleline(search_text).desired_width(120.0).lock_focus(true));
+			if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+				action = Action::Update;
+			}
+			if !self.initialized {
+				response.request_focus();
+				self.initialized = true;
+			}
+			
+			if ui.add(egui::Button::new("Update")).clicked() {
+				action = Action::Update;
+			}
 
 			if ui.add(egui::Button::new("<")).clicked() {
 				action = Action::Previous;
-			} else if ui.add(egui::Button::new(">")).clicked() {
+			}
+
+			if self.search_text == self.searched_text && self.search_text.len() > 0 && self.results.len() == 0 {
+				ui.colored_label(RED, " 0/0 ");
+			} else {
+				ui.label(format!(" {}/{} ", min(self.current_result + 1, self.results.len()), self.results.len()));
+			}
+
+			if ui.add(egui::Button::new(">")).clicked() {
 				action = Action::Next;
 			}
 		});
@@ -116,6 +141,7 @@ impl View for SearchWindow {
             });
 
 		match action {
+			Action::Update => self.search(tabs, selected_tab),
 			Action::Next => self.find_next(tabs, selected_tab),
 			Action::Previous => self.find_previous(tabs, selected_tab),
 			Action::Replace => self.replace(tabs, selected_tab),
@@ -138,6 +164,10 @@ impl SearchWindow {
 	}
 
 	fn search(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
+		if self.search_text.len() == 0 {
+			return
+		}
+
 		let mut search_results: Vec<Selection> = vec![];
 
 		if self.across_documents {
@@ -145,14 +175,15 @@ impl SearchWindow {
 				search_results.extend(self.match_text(tab.code.clone(), TabNumber::from_index(index)));
 			}
 		} else {
-			search_results.extend(self.match_text(tabs[TabNumber::to_index(&selected_tab.clone())].code.clone(), selected_tab.clone()));
+			search_results.extend(self.match_text(tabs[selected_tab.to_index()].code.clone(), selected_tab.clone()));
 		}
 		
-		println!("Found {} results", search_results.len());
 		self.searched_text = self.search_text.clone();
 		self.results = search_results.clone();
 		
 		self.current_result = 0;
+		self.result_selected = false;
+		self.tab_selected = false;
 	}
 
 	fn match_text(&self, tab_text: String, tab_number: TabNumber) -> Vec<Selection> {
@@ -166,7 +197,7 @@ impl SearchWindow {
 	}
 
 	fn find_next(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
-		if self.searched_text != self.search_text && self.search_text.len() > 1 {
+		if self.searched_text != self.search_text {
 			self.search(tabs, selected_tab);
 		} else if self.results.len() > 1 {
 			self.current_result = (self.current_result.clone() + 1) % self.results.len();
@@ -178,10 +209,10 @@ impl SearchWindow {
 	}
 
 	fn find_previous(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
-		if self.searched_text != self.search_text && self.search_text.len() > 1 {
+		if self.searched_text != self.search_text {
 			self.search(tabs, selected_tab);
 		} else {
-			self.current_result = (self.current_result.clone() - 1 + self.results.len()) % self.results.len();
+			self.current_result = self.current_result.checked_sub(1).unwrap_or(self.results.len() - 1);
 			self.result_selected = false;
 			if self.results[self.current_result].tab != *selected_tab {
 				self.tab_selected = false;
@@ -190,6 +221,6 @@ impl SearchWindow {
 	}
 
 	fn replace(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
-		println!("Searched to replace {} with {}, tab lang : {} ", &self.search_text, &self.replace_text, tabs[TabNumber::to_index(selected_tab)].language);
+		println!("Searched to replace {} with {}, tab lang : {} ", &self.search_text, &self.replace_text, tabs[selected_tab.to_index()].language);
 	}
 }

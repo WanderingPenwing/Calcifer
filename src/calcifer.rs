@@ -1,5 +1,5 @@
 use eframe::egui;
-//use egui::{text::CCursor, text_edit::CCursorRange};
+use egui::{text::CCursor, text_edit::CCursorRange};
 use std::{env, path::Path, path::PathBuf, cmp::max, io, fs, cmp::min};
 use crate::tools;
 
@@ -139,25 +139,24 @@ impl super::Calcifer {
 	fn draw_code_file(&mut self, ui: &mut egui::Ui) {
 		let current_tab = &mut self.tabs[self.selected_tab.to_index()];
 		let lines = current_tab.code.chars().filter(|&c| c == '\n').count() + 1;
+		let mut override_cursor : Option<CCursorRange> = None;
+
+		if !self.search.result_selected && self.search.tab_selected {
+			override_cursor = Some(CCursorRange::two(
+    						CCursor::new(self.search.get_cursor_start()),
+    						CCursor::new(self.search.get_cursor_end()),
+						));
+			self.search.result_selected = true;
+			println!("Override cursor set : [{}, {}]", self.search.get_cursor_start(), self.search.get_cursor_end());
+		}
 		
-		let _output = CodeEditor::default()
-					  	.id_source("code editor")
-					 	 .with_rows(max(80, lines))
+		CodeEditor::default().id_source("code editor")
+					 	 .with_rows(max(45,lines))
 					  	.with_fontsize(14.0)
 					  	.with_theme(self.theme)
 					  	.with_syntax(tools::to_syntax(&current_tab.language))
 					  	.with_numlines(true)
-					  	.show(ui, &mut current_tab.code, &mut current_tab.scroll_offset);
-				//if !self.search.result_selected {
-					//output.state.set_ccursor_range(Some(CCursorRange::two(
-    					//CCursor::new(self.search.get_cursor_start()),
-    					//CCursor::new(self.search.get_cursor_end()),
-					//)));
-					//println!("Changed Cursor : from {} to {}", self.search.get_cursor_start(), self.search.get_cursor_end());
-					//self.search.result_selected = true;
-				//}
-			//});
-		ui.label(format!("Scroll : {}", current_tab.scroll_offset));
+					  	.show(ui, &mut current_tab.code, &mut current_tab.scroll_offset, override_cursor);
 		
 		if current_tab.history.len() < 1 {
 			current_tab.history.push(current_tab.code.clone());

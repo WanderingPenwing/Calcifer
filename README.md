@@ -1,8 +1,8 @@
 # Calcifer
 
-My custom code editor (only the features I want inside)
+My custom code editor (only the features I want inside) using egui and my own fork of egui_code_editor https://lib.rs/crates/egui_code_editor
 
-# 1.0 :
+# 1.0.0 :
 Added a File Tree
 Added Tabs
 Added an Embedded Terminal
@@ -12,4 +12,7 @@ Added Themes
 # 1.0.1 :
 Fixed Terminal sterr output
 Fixed scroll between tabs
+Library subjugation (got the raw files of the egui_code_editor for some internal modifications)
+
+# 1.0.2 :
 

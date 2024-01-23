@@ -3,16 +3,12 @@ pub mod highlighting;
 mod syntax;
 pub mod themes;
 
-
-use eframe::egui::widgets::text_edit::TextEditOutput;
-//use eframe::egui::ScrollArea;
 use eframe::egui;
+use egui::text_edit::{CCursorRange};
 use highlighting::highlight;
-//pub use highlighting::Token;
 use std::hash::{Hash, Hasher};
 pub use syntax::{Syntax, TokenType};
 pub use themes::ColorTheme;
-//pub use themes::DEFAULT_THEMES;
 
 #[derive(Clone, Debug, PartialEq)]
 /// CodeEditor struct which stores settings for highlighting.
@@ -185,9 +181,8 @@ impl CodeEditor {
         );
     }
 
-    //#[cfg(feature = "egui")]
     /// Show Code Editor
-    pub fn show(&mut self, ui: &mut egui::Ui, text: &mut String, vertical_offset: &mut f32) -> f32 {
+    pub fn show(&mut self, ui: &mut egui::Ui, text: &mut String, vertical_offset: &mut f32, override_cursor: Option<CCursorRange>) {
         //let mut text_edit_output: Option<TextEditOutput> = None;
         let mut code_editor = |ui: &mut egui::Ui| {
             ui.horizontal_top(|h| {
@@ -202,7 +197,7 @@ impl CodeEditor {
                             let layout_job = highlight(ui.ctx(), self, string);
                             ui.fonts(|f| f.layout_job(layout_job))
                         };
-                        let _output = egui::TextEdit::multiline(text)
+                        let mut output = egui::TextEdit::multiline(text)
                             .id_source(&self.id)
                             .lock_focus(true)
                             .desired_rows(self.rows)
@@ -210,7 +205,15 @@ impl CodeEditor {
                             .desired_width(if self.shrink { 0.0 } else { f32::MAX })
                             .layouter(&mut layouter)
                             .show(ui);
-                        //text_edit_output = Some(output);
+					
+						if override_cursor != None {
+							output.response.request_focus();
+							output.state.set_ccursor_range(override_cursor);
+							output.state.store(ui.ctx(), output.response.id);
+							println!("Cursor range overriden");
+						}
+
+						//text_edit_output = Some(output);
                     });
             });
         };
@@ -219,7 +222,6 @@ impl CodeEditor {
                 .id_source(format!("{}_outer_scroll", self.id))
                 .stick_to_bottom(self.stick_to_bottom)
 				.vertical_scroll_offset(vertical_offset.clone())
-				//.enable_scrolling(false)
                 .show(ui, code_editor);
 			*vertical_offset = scroll_area.state.offset.y.clone();
         } else {
@@ -227,6 +229,5 @@ impl CodeEditor {
         }
 
         //text_edit_output.expect("TextEditOutput should exist at this point")
-		*vertical_offset
     }
 }
