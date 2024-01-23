@@ -1,6 +1,6 @@
 [package]
 name = "calcifer"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 eframe = "0.25.0"
 env_logger = { version = "0.10.1", default-features = false, features = [
-    "auto-color",
-    "humantime",
+	"auto-color",
+	"humantime",
 ] }
 rfd = "0.12.1"
 egui_extras = "0.25.0"

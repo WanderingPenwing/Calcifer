@@ -19,4 +19,8 @@ Added find and replace function
 Added multi line tab and shift+tab
 Added Ctrl+E : comment multiline
 Fixed Ctr+Z (was already in library, tried to make my own, and then found the better one)
-Added indent recognition (when there is a line break, the indentaion level is kept)
+Added indent recognition (when there is a line break, the indentation level is kept)
+
+
+# 1.0.3 :
+Added Ctrl+T : turn 4 spaces into tab across the whole document

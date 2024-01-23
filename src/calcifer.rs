@@ -2,6 +2,7 @@ use eframe::egui;
 use egui::{text::CCursor, text_edit::CCursorRange};
 use std::{env, path::Path, path::PathBuf, cmp::max, io, fs, cmp::min};
 use crate::tools;
+use crate::TIME_LABELS;
 
 pub mod code_editor;
 use code_editor::CodeEditor;
@@ -25,6 +26,19 @@ impl super::Calcifer {
 								ui.selectable_value(&mut self.theme, theme, theme.name);
 							}
 						});
+						
+					ui.separator();
+					ui.checkbox(&mut self.debug_display, "Debug display");
+					ui.separator();
+					
+					if self.debug_display {
+						let combined_string: Vec<String> = TIME_LABELS.into_iter().zip(self.time_watch.clone().into_iter())
+					        .map(|(s, v)| format!("{} : {:.1} ms", s, v)).collect();
+					
+					    let mut result = combined_string.join(" ;  ");
+						result.push_str(&format!("    total : {:.1}", self.time_watch.clone().iter().sum::<f32>()));
+						ui.label(result);
+					}
 				});
 			});
 	}
@@ -228,6 +242,11 @@ impl super::Calcifer {
 		};
 		
 		let _ = tools::save_state(&app_state, super::SAVE_PATH);
+	}
+	
+	pub fn indent_with_tabs(&mut self) {
+		let current_tab = &mut self.tabs[self.selected_tab.to_index()];
+		current_tab.code = current_tab.code.replace("	", "\t")
 	}
 	
 	fn list_files(&mut self, ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
