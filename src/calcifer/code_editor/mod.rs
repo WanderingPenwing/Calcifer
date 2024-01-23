@@ -265,7 +265,7 @@ impl CodeEditor {
                             .show(ui);
 
 						let mut get_new_cursor : bool = true;
-						let mut extend : usize = 0;
+						let mut extend : isize = 0;
 
 						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
 							println!("line break");
@@ -317,9 +317,14 @@ impl CodeEditor {
 							if let Some(cursor_range) = last_cursor.clone() {
 								let start = min(cursor_range.primary.index, cursor_range.secondary.index);
 								let end = max(cursor_range.primary.index, cursor_range.secondary.index);
+								let extended = match end as isize + extend {
+        							// Check for overflow or negative result
+        							value if value < 0 => 0,
+        							value => value as usize,
+    							};
 								let cursor = Some(CCursorRange {
 									primary : CCursor::new(start),
-									secondary : CCursor::new(end + extend),
+									secondary : CCursor::new(max(start, extended)),
 								});
 								output.state.set_ccursor_range(cursor.clone());
 								output.state.store(ui.ctx(), output.response.id);
@@ -358,47 +363,52 @@ impl CodeEditor {
         //text_edit_output.expect("TextEditOutput should exist at this point")
     }
 
-	fn toggle_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> (String, usize) {
+	fn toggle_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> (String, isize) {
 		let mut substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
 		let mut new_text : String = "".into();
+		let extend : isize;
 		
 		if substring[1].contains(head) {
+			extend = - self.delta_char(substring[1].clone(), head);
 			substring[1] = substring[1].replace(&format!("\n{}", head), &"\n".to_string());
 		} else {
+			extend = self.delta_char(substring[1].clone(), head);
 			substring[1] = substring[1].replace(&"\n".to_string(), &format!("\n{}", head));
 		}
 		new_text.push_str(&substring[0].clone());
 		new_text.push_str(&substring[1].clone());
 		new_text.push_str(&substring[2].clone());
 
-		return (new_text, 0)
+		return (new_text, extend)
 	}
 
 
-	fn add_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> (String, usize) {
+	fn add_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> (String, isize) {
 		let mut substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
 		let mut new_text : String = "".into();
-		
+
+		let extend : isize = self.delta_char(substring[1].clone(), head);
 		substring[1] = substring[1].replace(&"\n".to_string(), &format!("\n{}", head));
 		
 		new_text.push_str(&substring[0].clone());
 		new_text.push_str(&substring[1].clone());
 		new_text.push_str(&substring[2].clone());
 
-		return (new_text, 0)
+		return (new_text, extend)
 	}
 
-	fn remove_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> (String, usize) {
+	fn remove_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> (String, isize) {
 		let mut substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
 		let mut new_text : String = "".into();
 		
+		let extend : isize = - self.delta_char(substring[1].clone(), head);
 		substring[1] = substring[1].replace(&format!("\n{}", head), &"\n".to_string());
 		
 		new_text.push_str(&substring[0].clone());
 		new_text.push_str(&substring[1].clone());
 		new_text.push_str(&substring[2].clone());
 
-		return (new_text, 0)
+		return (new_text, extend)
 	}
 
 	fn get_selection_substring(&self, text : String, cursor_range : CCursorRange) -> Vec<String> {
@@ -414,5 +424,9 @@ impl CodeEditor {
 		let last_char = end;
 		
 		return vec![text.slice(..first_char).to_string(), text.slice(first_char..last_char).to_string(), text.slice(last_char..).to_string()];
+	}
+
+	fn delta_char(&self, text : String, modifier: &str) -> isize {
+		(modifier.len() * text.match_indices(&"\n".to_string()).collect::<Vec<_>>().len()) as isize
 	}
 }
