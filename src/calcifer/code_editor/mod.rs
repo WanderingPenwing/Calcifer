@@ -237,7 +237,7 @@ impl CodeEditor {
     }
 
     /// Show Code Editor
-    pub fn show(&mut self, ui: &mut egui::Ui, text: &mut String, history: &mut Vec<String>, last_cursor: &mut Option<CCursorRange>, vertical_offset: &mut f32, override_cursor: Option<CCursorRange>) {
+    pub fn show(&mut self, ui: &mut egui::Ui, text: &mut String, saved: &mut bool, last_cursor: &mut Option<CCursorRange>, vertical_offset: &mut f32, override_cursor: Option<CCursorRange>) {
         //let mut text_edit_output: Option<TextEditOutput> = None;
         let mut code_editor = |ui: &mut egui::Ui| {
             ui.horizontal_top(|h| {
@@ -269,6 +269,7 @@ impl CodeEditor {
 
 						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
 							println!("line break");
+							//get previous line number of tabs, and 2 charcters before cursor
 						}
 
 						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::E) && i.modifiers.ctrl) {
@@ -296,17 +297,6 @@ impl CodeEditor {
 							}
 						}
 
-						if output.response.has_focus() && ui.input( |i| i.key_pressed(egui::Key::Z) && i.modifiers.ctrl) {
-							println!("Ctrl+Z");
-							//let current_tab = &mut self.tabs[self.selected_tab.to_index()];
-							//if current_tab.history.len() > 1 {
-								//current_tab.code = current_tab.history[current_tab.history.len() - 2].clone();
-								//current_tab.history.pop();
-							//}
-						}
-					
-						
-
 						if override_cursor != None {
 							output.response.request_focus();
 							output.state.set_ccursor_range(override_cursor);
@@ -332,20 +322,10 @@ impl CodeEditor {
 							}
 						}
 						
-
-						//text_edit_output = Some(output);
-
-						if history.len() < 1 {
-							history.push(text.clone());
+						if previous_text != text.clone() {
+							*saved = false;
 						}
-		
-						//if &current_tab.code != current_tab.history.last().expect("There should be an history") {
-							//current_tab.history.push(current_tab.code.clone());
-							//current_tab.saved = false;
-							//if current_tab.history.len() > super::HISTORY_LENGTH {
-								//current_tab.history.remove(0);
-							//}
-						//}
+						//text_edit_output = Some(output);
                     });
             });
         };

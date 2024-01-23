@@ -155,7 +155,7 @@ impl super::Calcifer {
 					  	.with_theme(self.theme)
 					  	.with_syntax(tools::to_syntax(&current_tab.language))
 					  	.with_numlines(true)
-					  	.show(ui, &mut current_tab.code, &mut current_tab.history, &mut current_tab.last_cursor, &mut current_tab.scroll_offset, override_cursor);
+					  	.show(ui, &mut current_tab.code, &mut current_tab.saved, &mut current_tab.last_cursor, &mut current_tab.scroll_offset, override_cursor);
 	}
 
     pub fn save_tab(&self) -> Option<PathBuf> {

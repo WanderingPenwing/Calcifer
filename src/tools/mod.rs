@@ -77,7 +77,6 @@ pub struct Tab {
 	pub code : String,
 	pub language : String,
 	pub saved : bool,
-	pub history : Vec<String>,
 	pub scroll_offset : f32,
 	pub last_cursor : Option<CCursorRange>,
 }
@@ -89,7 +88,6 @@ impl Default for Tab {
 			code: "// Hello there, Master".into(),
 			language: "rs".into(),
 			saved: false,
-			history: vec![],
 			scroll_offset: 0.0,
 			last_cursor: None,
 		}

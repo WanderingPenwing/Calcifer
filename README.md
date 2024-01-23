@@ -17,3 +17,4 @@ Library subjugation (got the raw files of the egui_code_editor for some internal
 # 1.0.2 :
 Added find and replace function
 Added multi line tab and shift+tab
+Added Ctrl+E : comment multiline

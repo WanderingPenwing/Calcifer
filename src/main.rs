@@ -9,7 +9,6 @@ use calcifer::code_editor::themes::DEFAULT_THEMES;
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
-const HISTORY_LENGTH : usize = 2;
 const SAVE_PATH : &str = "calcifer_save.json";
 
 
