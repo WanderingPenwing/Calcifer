@@ -182,7 +182,7 @@ impl CodeEditor {
     }
 
     /// Show Code Editor
-    pub fn show(&mut self, ui: &mut egui::Ui, text: &mut String, vertical_offset: &mut f32, override_cursor: Option<CCursorRange>) {
+    pub fn show(&mut self, ui: &mut egui::Ui, text: &mut String, history: &mut Vec<String>, last_cursor: &mut Option<CCursorRange>, vertical_offset: &mut f32, override_cursor: Option<CCursorRange>) {
         //let mut text_edit_output: Option<TextEditOutput> = None;
         let mut code_editor = |ui: &mut egui::Ui| {
             ui.horizontal_top(|h| {
@@ -197,7 +197,10 @@ impl CodeEditor {
                             let layout_job = highlight(ui.ctx(), self, string);
                             ui.fonts(|f| f.layout_job(layout_job))
                         };
-                        let mut output = egui::TextEdit::multiline(text)
+
+						let previous_text = text.clone();
+
+						let mut output = egui::TextEdit::multiline(text)
                             .id_source(&self.id)
                             .lock_focus(true)
                             .desired_rows(self.rows)
@@ -205,14 +208,74 @@ impl CodeEditor {
                             .desired_width(if self.shrink { 0.0 } else { f32::MAX })
                             .layouter(&mut layouter)
                             .show(ui);
+
+						let mut get_new_cursor : bool = true;
+
+						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+							println!("line break");
+						}
+
+						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::E) && i.modifiers.ctrl) {
+							println!("Ctrl+E");
+							if let Some(range) = last_cursor {
+								*text = self.toggle_start_of_line(range.clone(), text.clone(), "//");
+								get_new_cursor = false;
+							}
+						}
+
+						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Tab)) {
+							println!("Tab");
+							if let Some(range) = last_cursor {
+								if range.primary.index != range.secondary.index {
+									*text = self.add_start_of_line(range.clone(), previous_text.clone(), "\t");
+									get_new_cursor = false;
+								}
+							}
+						}
+
+						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Tab) && i.modifiers.shift) {
+							println!("Shift+Tab");
+							if let Some(range) = last_cursor {
+								if range.primary.index != range.secondary.index {
+									*text = self.remove_start_of_line(range.clone(), previous_text.clone(), "\t");
+									get_new_cursor = false;
+								}
+							}
+						}
+
+						if output.response.has_focus() && ui.input( |i| i.key_pressed(egui::Key::Z) && i.modifiers.ctrl) {
+							println!("Ctrl+Z");
+							//let current_tab = &mut self.tabs[self.selected_tab.to_index()];
+							//if current_tab.history.len() > 1 {
+								//current_tab.code = current_tab.history[current_tab.history.len() - 2].clone();
+								//current_tab.history.pop();
+							//}
+						}
 					
+						if get_new_cursor {
+							*last_cursor = output.state.clone().ccursor_range();
+						}
+
 						if override_cursor != None {
 							output.response.request_focus();
 							output.state.set_ccursor_range(override_cursor);
 							output.state.store(ui.ctx(), output.response.id);
 						}
+						
 
 						//text_edit_output = Some(output);
+
+						if history.len() < 1 {
+							history.push(text.clone());
+						}
+		
+						//if &current_tab.code != current_tab.history.last().expect("There should be an history") {
+							//current_tab.history.push(current_tab.code.clone());
+							//current_tab.saved = false;
+							//if current_tab.history.len() > super::HISTORY_LENGTH {
+								//current_tab.history.remove(0);
+							//}
+						//}
                     });
             });
         };
@@ -229,4 +292,26 @@ impl CodeEditor {
 
         //text_edit_output.expect("TextEditOutput should exist at this point")
     }
+
+	fn toggle_start_of_line(&self, cursor_range : CCursorRange, text : String, substring : &str) -> String {
+		let mut text_clone = text.clone();
+		
+
+		text_clone
+	}
+
+
+	fn add_start_of_line(&self, cursor_range : CCursorRange, text : String, substring : &str) -> String {
+		let mut text_clone = text.clone();
+		
+
+		text_clone
+	}
+
+	fn remove_start_of_line(&self, cursor_range : CCursorRange, text : String, substring : &str) -> String {
+		let mut text_clone = text.clone();
+		
+
+		text_clone
+	}
 }

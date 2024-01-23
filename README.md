@@ -15,4 +15,4 @@ Fixed scroll between tabs
 Library subjugation (got the raw files of the egui_code_editor for some internal modifications)
 
 # 1.0.2 :
-
+Added find and replace function

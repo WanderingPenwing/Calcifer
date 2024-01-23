@@ -155,19 +155,7 @@ impl super::Calcifer {
 					  	.with_theme(self.theme)
 					  	.with_syntax(tools::to_syntax(&current_tab.language))
 					  	.with_numlines(true)
-					  	.show(ui, &mut current_tab.code, &mut current_tab.scroll_offset, override_cursor);
-		
-		if current_tab.history.len() < 1 {
-			current_tab.history.push(current_tab.code.clone());
-		}
-		
-		if &current_tab.code != current_tab.history.last().expect("There should be an history") {
-			current_tab.history.push(current_tab.code.clone());
-			current_tab.saved = false;
-			if current_tab.history.len() > super::HISTORY_LENGTH {
-				current_tab.history.remove(0);
-			}
-		}
+					  	.show(ui, &mut current_tab.code, &mut current_tab.history, &mut current_tab.last_cursor, &mut current_tab.scroll_offset, override_cursor);
 	}
 
     pub fn save_tab(&self) -> Option<PathBuf> {
@@ -201,15 +189,6 @@ impl super::Calcifer {
 		} else {
 			println!("File save failed.");
 		}
-	}
-	
-	pub fn undo(&mut self) {
-		let current_tab = &mut self.tabs[self.selected_tab.to_index()];
-		if current_tab.history.len() < 2 {
-			return
-		}
-		current_tab.code = current_tab.history[current_tab.history.len() - 2].clone();
-		current_tab.history.pop();
 	}
 	
 	pub fn from_app_state(app_state: tools::AppState) -> Self {
@@ -286,8 +265,7 @@ impl super::Calcifer {
 			code: fs::read_to_string(path).expect("Not able to read the file"),
 			language: path.to_str().unwrap().split('.').last().unwrap().into(),
 			saved: true,
-			history: vec![],
-			scroll_offset: 0.0,
+			..tools::Tab::default()
 		};
 		self.tabs.push(new_tab);
 		

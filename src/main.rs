@@ -86,10 +86,6 @@ impl eframe::App for Calcifer {
 		if ctx.input( |i| i.key_pressed(egui::Key::S) && i.modifiers.ctrl && i.modifiers.shift) {
 			self.handle_save_file(self.save_tab_as());
 		}
-		
-		if ctx.input( |i| i.key_pressed(egui::Key::Z) && i.modifiers.ctrl) {
-			self.undo();
-		}
 
 		if ctx.input( |i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {
 			self.searching = !self.searching.clone();

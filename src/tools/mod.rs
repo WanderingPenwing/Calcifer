@@ -1,6 +1,7 @@
 use std::{process::Command, cmp::Ordering, env, path::PathBuf, fs::read_to_string, fs::write};
 use crate::calcifer::code_editor::Syntax;
 use eframe::egui;
+use egui::{text::CCursor, text_edit::CCursorRange};
 use serde::{Serialize, Deserialize};
 
 //pub mod themes;
@@ -78,6 +79,7 @@ pub struct Tab {
 	pub saved : bool,
 	pub history : Vec<String>,
 	pub scroll_offset : f32,
+	pub last_cursor : Option<CCursorRange>,
 }
 
 impl Default for Tab {
@@ -89,6 +91,7 @@ impl Default for Tab {
 			saved: false,
 			history: vec![],
 			scroll_offset: 0.0,
+			last_cursor: None,
 		}
 	}
 }
