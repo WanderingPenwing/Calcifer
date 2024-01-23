@@ -5,7 +5,7 @@ mod syntax;
 pub mod themes;
 
 use eframe::egui;
-use egui::text_edit::{CCursorRange};
+use egui::{text_edit::CCursorRange, text::CCursor};
 use highlighting::highlight;
 use std::hash::{Hash, Hasher};
 pub use syntax::{Syntax, TokenType};
@@ -265,34 +265,32 @@ impl CodeEditor {
                             .show(ui);
 
 						let mut get_new_cursor : bool = true;
+						let mut extend : usize = 0;
 
 						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
 							println!("line break");
 						}
 
 						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::E) && i.modifiers.ctrl) {
-							println!("Ctrl+E");
 							if let Some(range) = last_cursor {
-								*text = self.toggle_start_of_line(range.clone(), text.clone(), "//");
+								(*text, extend) = self.toggle_start_of_line(range.clone(), text.clone(), "//");
 								get_new_cursor = false;
 							}
 						}
 
 						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Tab)) {
-							println!("Tab");
 							if let Some(range) = last_cursor {
 								if range.primary.index != range.secondary.index {
-									*text = self.add_start_of_line(range.clone(), previous_text.clone(), "\t");
+									(*text, extend) = self.add_start_of_line(range.clone(), previous_text.clone(), "\t");
 									get_new_cursor = false;
 								}
 							}
 						}
 
 						if output.response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Tab) && i.modifiers.shift) {
-							println!("Shift+Tab");
 							if let Some(range) = last_cursor {
 								if range.primary.index != range.secondary.index {
-									*text = self.remove_start_of_line(range.clone(), previous_text.clone(), "\t");
+									(*text, extend) = self.remove_start_of_line(range.clone(), previous_text.clone(), "\t");
 									get_new_cursor = false;
 								}
 							}
@@ -307,14 +305,26 @@ impl CodeEditor {
 							//}
 						}
 					
-						if get_new_cursor {
-							*last_cursor = output.state.clone().ccursor_range();
-						}
+						
 
 						if override_cursor != None {
 							output.response.request_focus();
 							output.state.set_ccursor_range(override_cursor);
 							output.state.store(ui.ctx(), output.response.id);
+						} else if get_new_cursor {
+							*last_cursor = output.state.clone().ccursor_range();
+						} else {
+							if let Some(cursor_range) = last_cursor.clone() {
+								let start = min(cursor_range.primary.index, cursor_range.secondary.index);
+								let end = max(cursor_range.primary.index, cursor_range.secondary.index);
+								let cursor = Some(CCursorRange {
+									primary : CCursor::new(start),
+									secondary : CCursor::new(end + extend),
+								});
+								output.state.set_ccursor_range(cursor.clone());
+								output.state.store(ui.ctx(), output.response.id);
+								*last_cursor = cursor.clone();
+							}
 						}
 						
 
@@ -348,21 +358,24 @@ impl CodeEditor {
         //text_edit_output.expect("TextEditOutput should exist at this point")
     }
 
-	fn toggle_start_of_line(&self, cursor_range : CCursorRange, text : String, _head : &str) -> String {
-		let substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
+	fn toggle_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> (String, usize) {
+		let mut substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
 		let mut new_text : String = "".into();
 		
-		//substring[1] = substring[1].replace("\n".to_string(), "\n".to_string().push_str(head));
-		
+		if substring[1].contains(head) {
+			substring[1] = substring[1].replace(&format!("\n{}", head), &"\n".to_string());
+		} else {
+			substring[1] = substring[1].replace(&"\n".to_string(), &format!("\n{}", head));
+		}
 		new_text.push_str(&substring[0].clone());
 		new_text.push_str(&substring[1].clone());
 		new_text.push_str(&substring[2].clone());
 
-		new_text
+		return (new_text, 0)
 	}
 
 
-	fn add_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> String {
+	fn add_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> (String, usize) {
 		let mut substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
 		let mut new_text : String = "".into();
 		
@@ -372,10 +385,10 @@ impl CodeEditor {
 		new_text.push_str(&substring[1].clone());
 		new_text.push_str(&substring[2].clone());
 
-		return new_text
+		return (new_text, 0)
 	}
 
-	fn remove_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> String {
+	fn remove_start_of_line(&self, cursor_range : CCursorRange, text : String, head : &str) -> (String, usize) {
 		let mut substring = self.get_selection_substring(text.clone(), cursor_range.clone()).clone();
 		let mut new_text : String = "".into();
 		
@@ -385,14 +398,14 @@ impl CodeEditor {
 		new_text.push_str(&substring[1].clone());
 		new_text.push_str(&substring[2].clone());
 
-		return new_text
+		return (new_text, 0)
 	}
 
 	fn get_selection_substring(&self, text : String, cursor_range : CCursorRange) -> Vec<String> {
 		let start = min(cursor_range.primary.index, cursor_range.secondary.index);
 		let end = max(cursor_range.primary.index, cursor_range.secondary.index);
 
-		let mut first_char = start;
+		let mut first_char = max(0, start - 1);
 
 		while first_char > 0 && text.char_at(first_char) != '\n' {
 			first_char -= 1;
