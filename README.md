@@ -36,3 +36,4 @@ Max framerate => 30 fps (less cpu usage)
 
 # 1.0.4 :
 Added close tab and refresh confirm prompt
+Async terminal !

@@ -36,6 +36,8 @@ pub fn save_state(state: &AppState, file_path: &str) -> Result<(), std::io::Erro
         .open(file_path)?;
 
     file.write_all(serialized_state.as_bytes())?;
+	
+	println!("Saved state at {}", file_path);
 
 	Ok(())
 }
