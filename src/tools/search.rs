@@ -211,10 +211,15 @@ impl SearchWindow {
 		if self.searched_text != self.search_text {
 			self.search(tabs, &mut *selected_tab);
 		}
-
+		
+		let mut done : Vec<TabNumber> = vec![];
 		for element in &self.results {
+			if done.contains(&element.tab) {
+				continue;
+			}
 			tabs[element.tab.to_index()].code = tabs[element.tab.to_index()].code.replace(&self.search_text, &self.replace_text);
 			tabs[element.tab.to_index()].saved = false;
+			done.push(element.tab.clone())
 		}
 	}
 }
