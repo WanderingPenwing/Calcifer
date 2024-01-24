@@ -7,14 +7,14 @@ edition = "2021"
 
 [dependencies]
 eframe = "0.25.0"
-env_logger = { version = "0.10.1", default-features = false, features = [
-	"auto-color",
-	"humantime",
-] }
+# env_logger = { version = "0.10.1", default-features = false, features = [
+	# "auto-color",
+	# "humantime",
+# ] }
 rfd = "0.12.1"
 egui_extras = "0.25.0"
 image = "0.24.8"
 serde = { version = "1.0.195", features = ["derive"] }
 serde_json = "1.0.111"
-
+nix = { version = "0.27.1", features = ["fs"] }
 

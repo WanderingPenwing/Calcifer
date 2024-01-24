@@ -9,7 +9,7 @@ use calcifer::code_editor::themes::DEFAULT_THEMES;
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
-const SAVE_PATH : &str = "calcifer_save.json";
+const SAVE_PATH : &str = "/home/penwing/Documents/.saves/calcifer_save.json";
 const TIME_LABELS : [&str; 5] = ["settings", "tree", "terminal", "tabs", "content"];
 const MAX_FPS : f32 = 30.0;
 const PATH_ROOT : &str = "/home/penwing/Documents/";
@@ -20,7 +20,7 @@ const MAX_TABS : usize = 20;
 fn main() -> Result<(), eframe::Error> {
 	let icon_data = tools::load_icon();
 	
-	env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+	//env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 	let options = eframe::NativeOptions {
 		viewport: egui::ViewportBuilder::default()
 			.with_inner_size([1200.0, 800.0])

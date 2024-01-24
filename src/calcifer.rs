@@ -100,7 +100,8 @@ impl Calcifer {
 							ui.separator();
 							ui.horizontal_wrapped(|ui| {
 								ui.spacing_mut().item_spacing.y = 0.0;
-								for entry in &self.command_history {
+								for entry in &mut self.command_history {
+									entry.update();
 									ui.colored_label(command_color, format!("\n{} {}", entry.env, entry.command));
 									ui.end_row();
 									if entry.output != "" {

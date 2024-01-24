@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, path::PathBuf, path::Path, fs::read_to_string, fs::write, path::Component, ffi::OsStr};
+use std::{cmp::Ordering, path::PathBuf, path::Path, fs, fs::read_to_string, io::Write, path::Component, ffi::OsStr, fs::OpenOptions};
 use crate::calcifer::code_editor::Syntax;
 use eframe::egui;
 use serde::{Serialize, Deserialize};
@@ -24,8 +24,18 @@ pub struct AppState {
 
 pub fn save_state(state: &AppState, file_path: &str) -> Result<(), std::io::Error> {
 	let serialized_state = serde_json::to_string(state)?;
+	
+	if let Some(parent_dir) = Path::new(file_path).parent() {
+        fs::create_dir_all(parent_dir)?;
+    }
 
-	write(file_path, serialized_state)?;
+	let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(file_path)?;
+
+    file.write_all(serialized_state.as_bytes())?;
 
 	Ok(())
 }
