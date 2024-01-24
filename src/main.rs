@@ -13,6 +13,7 @@ const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
 const SAVE_PATH : &str = "calcifer_save.json";
 const TIME_LABELS : [&str; 5] = ["settings", "tree", "terminal", "tabs", "content"];
 const MAX_FPS : f32 = 30.0;
+const PATH_ROOT : &str = "/home/penwing/Documents/";
 
 
 fn main() -> Result<(), eframe::Error> {
@@ -55,6 +56,7 @@ struct Calcifer {
 	command_history: Vec<tools::CommandEntry>,
 
 	theme: ColorTheme,
+	font_size: f32,
 
 	search: tools::search::SearchWindow,
 	searching: bool,
@@ -62,6 +64,8 @@ struct Calcifer {
 	debug_display: bool,
 	time_watch: Vec<f32>,
 	next_frame: time::Instant,
+	
+	tree_display: bool,
 }
 
 
@@ -75,6 +79,7 @@ impl Default for Calcifer {
 			command_history: Vec::new(),
 
 			theme: DEFAULT_THEMES[0],
+			font_size: 14.0,
 
 			search: tools::search::SearchWindow::default(),
 			searching: false,
@@ -82,6 +87,8 @@ impl Default for Calcifer {
 			debug_display: false,
 			time_watch: vec![0.0; TIME_LABELS.len()],
 			next_frame: time::Instant::now(),
+			
+			tree_display: false,
 		}
 	}
 }
@@ -94,16 +101,32 @@ impl eframe::App for Calcifer {
 		
 		let mut watch = time::Instant::now();
 		
-		if ctx.input( |i| i.key_pressed(egui::Key::S) && i.modifiers.ctrl) {
-			self.handle_save_file(self.save_tab());
-		}
-		
 		if ctx.input( |i| i.key_pressed(egui::Key::T) && i.modifiers.ctrl) {
 			self.indent_with_tabs();
 		}
 		
+		if ctx.input( |i| i.key_pressed(egui::Key::S) && i.modifiers.ctrl) {
+			self.handle_save_file(self.save_tab());
+		}
+		
 		if ctx.input( |i| i.key_pressed(egui::Key::S) && i.modifiers.ctrl && i.modifiers.shift) {
 			self.handle_save_file(self.save_tab_as());
+		}
+		
+		if ctx.input( |i| i.key_pressed(egui::Key::ArrowLeft) && i.modifiers.alt) {
+			self.move_through_tabs(false);
+		}
+		
+		if ctx.input( |i| i.key_pressed(egui::Key::ArrowRight) && i.modifiers.alt) {
+			self.move_through_tabs(true);
+		}
+		
+		if ctx.input( |i| i.zoom_delta() > 1.0) {
+			self.font_size = (self.font_size * 1.1).min(30.0);
+		}
+		
+		if ctx.input( |i| i.zoom_delta() < 1.0) {
+			self.font_size = (self.font_size / 1.1).max(10.0);
 		}
 
 		if ctx.input( |i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {

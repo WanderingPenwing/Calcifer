@@ -1,4 +1,4 @@
-use std::{process::Command, cmp::Ordering, env, path::PathBuf, fs::read_to_string, fs::write};
+use std::{env, process::Command, cmp::Ordering, path::PathBuf, path::Path, fs::read_to_string, fs::write, path::Component, ffi::OsStr};
 use crate::calcifer::code_editor::Syntax;
 use eframe::egui;
 use egui::text_edit::CCursorRange;
@@ -179,15 +179,27 @@ pub fn to_syntax(language : &str) -> Syntax {
 
 pub fn run_command(cmd : String) -> CommandEntry {
 	let mut entry = CommandEntry::default();
-	let output = Command::new("sh")
-		.arg("-c")
-		.arg(cmd.clone())
-		.output()
-		.expect("failed to execute process");
-	
-	entry.command = cmd;
-	entry.output = (&String::from_utf8_lossy(&output.stdout)).to_string();
-	entry.error = (&String::from_utf8_lossy(&output.stderr)).to_string();
+	if &cmd[..2] == "cd" {
+		let path_append = cmd[3..].replace("~", "/home/penwing");
+		let path = Path::new(&path_append);
+		entry.command = cmd;
+		
+		if format!("{}", path.display()) != "/" {
+			if !env::set_current_dir(path).is_ok() {
+				entry.error = format!("Could not find path : {}", path.display());
+			}
+		}
+	} else {
+		let output = Command::new("sh")
+			.arg("-c")
+			.arg(cmd.clone())
+			.output()
+			.expect("failed to execute process");
+		
+		entry.command = cmd;
+		entry.output = (&String::from_utf8_lossy(&output.stdout)).to_string();
+		entry.error = (&String::from_utf8_lossy(&output.stderr)).to_string();
+	}
 	
 	entry
 }
@@ -206,6 +218,21 @@ pub fn sort_directories_first(a: &std::fs::DirEntry, b: &std::fs::DirEntry) -> O
 		// Both are either directories or files, sort alphabetically
 		a.path().cmp(&b.path())
 	}
+}
+
+
+pub fn format_path(path: &Path, n_parents: usize) -> String {
+    let components: Vec<&OsStr> = path
+        .components()
+		.rev()
+        .take(n_parents + 1) // Take up to three components (root, parent, file/folder)
+        .filter_map(|component| match component {
+            Component::RootDir | Component::CurDir => None,
+            _ => Some(component.as_os_str()),
+        })
+        .collect();
+
+    format!("{}>", components.iter().rev().map(|&c| c.to_string_lossy()).collect::<Vec<_>>().join("/"))
 }
 
 

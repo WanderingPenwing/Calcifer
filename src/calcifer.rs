@@ -3,6 +3,7 @@ use egui::{text::CCursor, text_edit::CCursorRange};
 use std::{env, path::Path, path::PathBuf, cmp::max, io, fs, cmp::min};
 use crate::tools;
 use crate::TIME_LABELS;
+use crate::PATH_ROOT;
 
 pub mod code_editor;
 use code_editor::CodeEditor;
@@ -16,6 +17,13 @@ impl super::Calcifer {
 			.resizable(false)
 			.show(ctx, |ui| {
 				ui.horizontal(|ui| {
+					if ui.add(egui::Button::new("open file")).clicked() {
+						if let Some(path) = rfd::FileDialog::new().set_directory(Path::new(&PATH_ROOT)).pick_file() {
+							self.selected_tab = self.open_file(&path);
+						}
+					}
+					ui.separator();
+					
 					ui.label("Theme ");
 					egui::ComboBox::from_label("")
 						.selected_text(format!("{}", self.theme.name))
@@ -28,15 +36,17 @@ impl super::Calcifer {
 						});
 						
 					ui.separator();
-					ui.checkbox(&mut self.debug_display, "Debug display");
+					self.tree_display = self.toggle(ui, self.tree_display, "Tree");
+					ui.separator();
+					self.debug_display = self.toggle(ui, self.debug_display, "Debug");
 					ui.separator();
 					
 					if self.debug_display {
 						let combined_string: Vec<String> = TIME_LABELS.into_iter().zip(self.time_watch.clone().into_iter())
-					        .map(|(s, v)| format!("{} : {:.1} ms", s, v)).collect();
+							.map(|(s, v)| format!("{} : {:.1} ms", s, v)).collect();
 					
-					    let mut result = combined_string.join(" ;  ");
-						result.push_str(&format!("    total : {:.1}", self.time_watch.clone().iter().sum::<f32>()));
+						let mut result = combined_string.join(" ;  ");
+						result.push_str(&format!("	total : {:.1}", self.time_watch.clone().iter().sum::<f32>()));
 						ui.label(result);
 					}
 				});
@@ -44,15 +54,13 @@ impl super::Calcifer {
 	}
 	
 	pub fn draw_tree_panel(&mut self, ctx: &egui::Context) {
+		if !self.tree_display {
+			return
+		}
 		egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
 			ui.heading("Bookshelf");
-			if ui.add(egui::Button::new("open file")).clicked() {
-				if let Some(path) = rfd::FileDialog::new().pick_file() {
-					self.selected_tab = self.open_file(&path);
-				}
-			}
 			ui.separator();
-			let _ = self.list_files(ui, Path::new("/home/penwing/Documents/"));
+			let _ = self.list_files(ui, Path::new(&PATH_ROOT));
 			ui.separator();
 		});
 	}
@@ -63,11 +71,15 @@ impl super::Calcifer {
 			.min_height(0.0)
 			.show(ctx, |ui| {
 				ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+					let command_color = egui::Color32::from_hex(self.theme.functions).expect("Theme color issue (functions)");
+					let entry_color = egui::Color32::from_hex(self.theme.literals).expect("Theme color issue (literals)");
+					let bg_color = egui::Color32::from_hex(self.theme.bg).expect("Theme color issue (bg)");
+					
 					ui.label("");
 					ui.horizontal(|ui| {
-						ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_hex(self.theme.bg).expect("Could not convert color");
+						ui.style_mut().visuals.extreme_bg_color = bg_color;
 						let Self { command, .. } = self;
-						ui.label(format!("{}>", env::current_dir().expect("Could not find Shell Environnment").file_name().expect("Could not get Shell Environnment Name").to_string_lossy().to_string()));
+						ui.colored_label(command_color.clone(), tools::format_path(&env::current_dir().expect("Could not find Shell Environnment"), 2));
 						let response = ui.add(egui::TextEdit::singleline(command).desired_width(f32::INFINITY).lock_focus(true));
 
 						if response.lost_focus() && ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
@@ -83,10 +95,10 @@ impl super::Calcifer {
 							ui.horizontal_wrapped(|ui| {
 								ui.spacing_mut().item_spacing.y = 0.0;
 								for entry in &self.command_history {
-									ui.label(format!("{}> {}", entry.env, entry.command));
+									ui.colored_label(command_color, format!("{}> {}", entry.env, entry.command));
 									ui.end_row();
 									if entry.output != "" {
-										ui.label(&entry.output);
+										ui.colored_label(entry_color, &entry.output);
 										ui.end_row();
 									}
 									if entry.error != "" {
@@ -138,9 +150,16 @@ impl super::Calcifer {
 	pub fn draw_content_panel(&mut self, ctx: &egui::Context) {
 		egui::CentralPanel::default().show(ctx, |ui| {
 			ui.horizontal(|ui| {
+				if ui.add(egui::Button::new("open in terminal")).clicked() {
+					let mut path = self.tabs[self.selected_tab.to_index()].path.clone();
+					path.pop();
+					tools::run_command(format!("cd {}", path.display()));
+				}
+				
 				ui.label("Picked file:");
 				ui.monospace(self.tabs[self.selected_tab.to_index()].path.to_string_lossy().to_string());
 			});
+			ui.separator();
 			
 			if self.selected_tab == tools::TabNumber::None {
 				return
@@ -165,7 +184,7 @@ impl super::Calcifer {
 		
 		CodeEditor::default().id_source("code editor")
 					 	 .with_rows(max(45,lines))
-					  	.with_fontsize(14.0)
+					  	.with_fontsize(self.font_size)
 					  	.with_theme(self.theme)
 					  	.with_syntax(tools::to_syntax(&current_tab.language))
 					  	.with_numlines(true)
@@ -249,6 +268,15 @@ impl super::Calcifer {
 		current_tab.code = current_tab.code.replace("	", "\t")
 	}
 	
+	pub fn move_through_tabs(&mut self, forward : bool) {
+		let new_index = if forward {
+			(self.selected_tab.to_index() + 1) % self.tabs.len()
+		} else {
+			self.selected_tab.to_index().checked_sub(1).unwrap_or(self.tabs.len() - 1)
+		};
+		self.selected_tab = tools::TabNumber::from_index(new_index);
+	}
+	
 	fn list_files(&mut self, ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
 		if let Some(name) = path.file_name() {
 			if path.is_dir() {
@@ -299,5 +327,18 @@ impl super::Calcifer {
 	fn delete_tab(&mut self, index : usize) -> tools::TabNumber {
 		self.tabs.remove(index);
 		return tools::TabNumber::from_index(min(index, self.tabs.len() - 1))
+	}
+	
+	fn toggle(&self, ui: &mut egui::Ui, display : bool, title : &str) -> bool {
+		let text = if display.clone() {
+			format!("hide {}", title)
+		} else {
+			format!("show {}", title)
+		};
+					
+		if ui.add(egui::Button::new(text)).clicked() {
+			return !display
+		}
+		return display
 	}
 }

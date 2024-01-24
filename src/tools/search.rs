@@ -33,7 +33,7 @@ impl Default for Selection {
 
 
 pub struct SearchWindow {
-    search_text: String,
+	search_text: String,
 	searched_text: String,
 	replace_text: String,
 
@@ -50,9 +50,9 @@ pub struct SearchWindow {
 
 
 impl Default for SearchWindow {
-    fn default() -> Self {
-        Self {
-            search_text: "".into(),
+	fn default() -> Self {
+		Self {
+			search_text: "".into(),
 			searched_text: "".into(),
 			replace_text: "".into(),
 			
@@ -65,29 +65,29 @@ impl Default for SearchWindow {
 
 			tab_selected: true,
 			result_selected: true,
-        }
-    }
+		}
+	}
 }
 
 
 impl Demo for SearchWindow {
-    fn name(&self) -> &str { //'static
-        "Search"
-    }
+	fn name(&self) -> &str { //'static
+		"Search"
+	}
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
-        egui::Window::new(self.name())
-            .open(open)
-            .vscroll(true)
-            .hscroll(true)
-            .show(ctx, |ui| self.ui(ui, tabs, selected_tab));
-    }
+	fn show(&mut self, ctx: &egui::Context, open: &mut bool, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
+		egui::Window::new(self.name())
+			.open(open)
+			.vscroll(true)
+			.hscroll(true)
+			.show(ctx, |ui| self.ui(ui, tabs, selected_tab));
+	}
 }
 
 
 impl View for SearchWindow {
-    fn ui(&mut self, ui: &mut egui::Ui, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
-        ui.set_min_width(250.0);
+	fn ui(&mut self, ui: &mut egui::Ui, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
+		ui.set_min_width(250.0);
 
 		let mut action : Action = Action::None;
 
@@ -128,9 +128,9 @@ impl View for SearchWindow {
 			self.searched_text = "".into();
 		}
 
-        egui::CollapsingHeader::new("Replace")
-            .default_open(false)
-            .show(ui, |ui| {
+		egui::CollapsingHeader::new("Replace")
+			.default_open(false)
+			.show(ui, |ui| {
 				ui.horizontal(|ui| {
 					let Self { replace_text, .. } = self;
 					ui.add(egui::TextEdit::singleline(replace_text).desired_width(120.0).lock_focus(true));
@@ -138,7 +138,7 @@ impl View for SearchWindow {
 						action = Action::Replace;
 					}
 				});
-            });
+			});
 
 		match action {
 			Action::Update => self.search(tabs, selected_tab),
@@ -147,7 +147,7 @@ impl View for SearchWindow {
 			Action::Replace => self.replace(tabs, selected_tab),
 			Action::None => (),
 		}
-    }
+	}
 }
 
 impl SearchWindow {
@@ -227,10 +227,9 @@ impl SearchWindow {
 			self.search(tabs, selected_tab);
 		}
 
-		println!("trying to replace {} with {}", self.search_text, self.replace_text);
-
 		for element in &self.results {
 			tabs[element.tab.to_index()].code = tabs[element.tab.to_index()].code.replace(&self.search_text, &self.replace_text);
+			tabs[element.tab.to_index()].saved = false;
 		}
 	}
 }

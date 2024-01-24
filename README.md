@@ -26,3 +26,9 @@ Added indent recognition (when there is a line break, the indentation level is k
 Added testing
 Added Ctrl+T : turn 4 spaces into tab across the whole document
 Added Time debug
+Added Tree toggle for performance
+Added Alt+Arrows to move through tabs
+Added Zoom
+Added cd
+Added terminal color
+
