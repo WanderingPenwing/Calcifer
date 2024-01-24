@@ -14,6 +14,7 @@ const SAVE_PATH : &str = "calcifer_save.json";
 const TIME_LABELS : [&str; 5] = ["settings", "tree", "terminal", "tabs", "content"];
 const MAX_FPS : f32 = 30.0;
 const PATH_ROOT : &str = "/home/penwing/Documents/";
+const DISPLAY_PATH_DEPTH : usize = 3;
 
 
 fn main() -> Result<(), eframe::Error> {

@@ -79,7 +79,7 @@ impl super::Calcifer {
 					ui.horizontal(|ui| {
 						ui.style_mut().visuals.extreme_bg_color = bg_color;
 						let Self { command, .. } = self;
-						ui.colored_label(command_color.clone(), tools::format_path(&env::current_dir().expect("Could not find Shell Environnment"), 2));
+						ui.colored_label(command_color.clone(), tools::format_path(&env::current_dir().expect("Could not find Shell Environnment")));
 						let response = ui.add(egui::TextEdit::singleline(command).desired_width(f32::INFINITY).lock_focus(true));
 
 						if response.lost_focus() && ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
@@ -95,7 +95,7 @@ impl super::Calcifer {
 							ui.horizontal_wrapped(|ui| {
 								ui.spacing_mut().item_spacing.y = 0.0;
 								for entry in &self.command_history {
-									ui.colored_label(command_color, format!("{}> {}", entry.env, entry.command));
+									ui.colored_label(command_color, format!("\n{} {}", entry.env, entry.command));
 									ui.end_row();
 									if entry.output != "" {
 										ui.colored_label(entry_color, &entry.output);

@@ -3,6 +3,7 @@ use crate::calcifer::code_editor::Syntax;
 use eframe::egui;
 use egui::text_edit::CCursorRange;
 use serde::{Serialize, Deserialize};
+use crate::DISPLAY_PATH_DEPTH;
 
 //pub mod themes;
 pub mod search;
@@ -101,25 +102,37 @@ impl Tab {
 	}
 }
 
-
+#[derive(Clone, PartialEq)]
 pub struct CommandEntry {
-	pub env : String,
-	pub command : String,
-	pub output : String,
-	pub error : String,
+	pub env: String,
+	pub command: String,
+	pub output: String,
+	pub error: String,
 }
 
-
-impl Default for CommandEntry {
-	fn default() -> Self {
-		Self {
-			env: env::current_dir().expect("Could not find Shell Environnment").file_name().expect("Could not get Shell Environnment Name").to_string_lossy().to_string(),
-			command : "".into(),
-			output : "".into(),
-			error : "".into(),
+impl CommandEntry {
+	pub fn new(command: String) -> Self {
+		CommandEntry {
+			env: format_path(&env::current_dir().expect("Could not find Shell Environnment")),
+			command,
+			output: String::new(),
+			error: String::new(),
 		}
 	}
+
+	pub fn run(&mut self) -> Self {
+		let output = Command::new("sh")
+            .arg("-c")
+            .arg(self.command.clone())
+            .output()
+            .expect("failed to execute process");
+		self.output = (&String::from_utf8_lossy(&output.stdout)).trim_end_matches('\n').to_string();
+		self.error = (&String::from_utf8_lossy(&output.stderr)).trim_end_matches('\n').to_string();
+		
+		self.clone()
+	}
 }
+
 
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -177,31 +190,37 @@ pub fn to_syntax(language : &str) -> Syntax {
 }
 
 
-pub fn run_command(cmd : String) -> CommandEntry {
-	let mut entry = CommandEntry::default();
-	if &cmd[..2] == "cd" {
-		let path_append = cmd[3..].replace("~", "/home/penwing");
-		let path = Path::new(&path_append);
-		entry.command = cmd;
+pub fn run_command(command: String) -> CommandEntry {
+	let mut entry = CommandEntry::new(command);
+
+	if entry.command.len() < 2 {
+		return entry.run();
+	}
 		
-		if format!("{}", path.display()) != "/" {
-			if !env::set_current_dir(path).is_ok() {
-				entry.error = format!("Could not find path : {}", path.display());
-			}
-		}
-	} else {
-		let output = Command::new("sh")
-			.arg("-c")
-			.arg(cmd.clone())
-			.output()
-			.expect("failed to execute process");
-		
-		entry.command = cmd;
-		entry.output = (&String::from_utf8_lossy(&output.stdout)).to_string();
-		entry.error = (&String::from_utf8_lossy(&output.stderr)).to_string();
+	if &entry.command[..2] != "cd" {
+		return entry.run()
 	}
 	
-	entry
+	if entry.command.len() < 4 {
+		entry.error = "Invalid cd, should provide path".to_string();
+		return entry
+	}
+			
+	let path_append = entry.command[3..].replace("~", "/home/penwing");
+	let path = Path::new(&path_append);
+	
+	if format!("{}", path.display()) == "/" {
+		entry.error = "Root access denied".to_string();
+		return entry
+	}
+				
+	if env::set_current_dir(path).is_ok() {
+		entry.output = format!("Moved to : {}", path.display());
+	} else {
+		entry.error = format!("Could not find path : {}", path.display());
+	}
+	
+	return entry
 }
 
 
@@ -221,18 +240,18 @@ pub fn sort_directories_first(a: &std::fs::DirEntry, b: &std::fs::DirEntry) -> O
 }
 
 
-pub fn format_path(path: &Path, n_parents: usize) -> String {
-    let components: Vec<&OsStr> = path
-        .components()
+pub fn format_path(path: &Path) -> String {
+	let components: Vec<&OsStr> = path
+		.components()
 		.rev()
-        .take(n_parents + 1) // Take up to three components (root, parent, file/folder)
-        .filter_map(|component| match component {
-            Component::RootDir | Component::CurDir => None,
-            _ => Some(component.as_os_str()),
-        })
-        .collect();
+		.take(DISPLAY_PATH_DEPTH)
+		.filter_map(|component| match component {
+			Component::RootDir | Component::CurDir => None,
+			_ => Some(component.as_os_str()),
+		})
+		.collect();
 
-    format!("{}>", components.iter().rev().map(|&c| c.to_string_lossy()).collect::<Vec<_>>().join("/"))
+	format!("{}>", components.iter().rev().map(|&c| c.to_string_lossy()).collect::<Vec<_>>().join("/"))
 }
 
 
