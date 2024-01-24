@@ -8,10 +8,19 @@ use std::{path::Path, sync::Arc, time, thread};
 use calcifer::code_editor::themes::DEFAULT_THEMES;
 
 #[cfg(debug_assertions)]
-const SAVE_PATH : &str = "/home/penwing/Documents/.saves/debug/calcifer_save.json";
+mod build {
+	pub const SAVE_PATH : &str = "/home/penwing/Documents/.saves/debug/calcifer_save.json";
+	pub const TITLE: &str = " debug";
+}
 
 #[cfg(not(debug_assertions))]
-const SAVE_PATH : &str = "/home/penwing/Documents/.saves/calcifer_save.json";
+mod build {
+	pub const SAVE_PATH : &str = "/home/penwing/Documents/.saves/calcifer_save.json";
+	pub const TITLE: &str = "";
+}
+
+use build::SAVE_PATH;
+use build::TITLE;
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
@@ -43,7 +52,7 @@ fn main() -> Result<(), eframe::Error> {
 	}
 
 	eframe::run_native(
-		"Calcifer v1.0.4",
+		&format!("Calcifer v{}{}", tools::version(), TITLE),
 		options,
 		Box::new(move |_cc| Box::from(Calcifer::from_app_state(app_state))),
 	)
@@ -181,4 +190,3 @@ impl eframe::App for Calcifer {
 		self.save_state();
 	}
 }
-

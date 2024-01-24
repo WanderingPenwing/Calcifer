@@ -40,7 +40,7 @@ impl ConfirmWindow {
 				self.proceed = true;
 			}
 			
-			if ui.add(egui::Button::new("Cancel")).clicked() {
+			if ui.add(egui::Button::new("No")).clicked() {
 				self.visible = false;
 			}
 		});

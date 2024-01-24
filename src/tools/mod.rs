@@ -3,6 +3,7 @@ use crate::calcifer::code_editor::Syntax;
 use eframe::egui;
 use serde::{Serialize, Deserialize};
 use crate::DISPLAY_PATH_DEPTH;
+use toml::Value;
 
 //my tools;
 pub mod search;
@@ -106,6 +107,25 @@ pub fn format_path(path: &Path) -> String {
 		.collect();
 
 	format!("{}>", components.iter().rev().map(|&c| c.to_string_lossy()).collect::<Vec<_>>().join("/"))
+}
+
+pub fn version() -> String {
+    // Read the contents of the Cargo.toml file
+    let toml_content = fs::read_to_string("Cargo.toml").expect("Failed to read Cargo.toml");
+
+    // Parse the TOML content
+    let toml: Value = toml::from_str(&toml_content).expect("Failed to parse TOML");
+
+    // Extract version information
+    if let Some(package) = toml.get("package") {
+        if let Some(version) = package.get("version") {
+            if let Some(version_string) = version.as_str() {
+                println!("Version: {}", version_string);
+                return version_string.to_string()
+            }
+        }
+    }
+	return "".to_string()
 }
 
 
