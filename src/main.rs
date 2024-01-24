@@ -15,11 +15,10 @@ const TIME_LABELS : [&str; 5] = ["settings", "tree", "terminal", "tabs", "conten
 const MAX_FPS : f32 = 30.0;
 const PATH_ROOT : &str = "/home/penwing/Documents/";
 const DISPLAY_PATH_DEPTH : usize = 3;
+const MAX_TABS : usize = 20;
 
 
 fn main() -> Result<(), eframe::Error> {
-	tools::loaded();
-	
 	let icon_data = tools::load_icon();
 	
 	env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -73,7 +72,7 @@ struct Calcifer {
 impl Default for Calcifer {
 	fn default() -> Self {
 		Self {
-			selected_tab: tools::TabNumber::Zero,
+			selected_tab: tools::TabNumber::from_index(0),
 			tabs: vec![tools::Tab::default()],
 
 			command: String::new(),
@@ -103,7 +102,7 @@ impl eframe::App for Calcifer {
 		let mut watch = time::Instant::now();
 		
 		if ctx.input( |i| i.key_pressed(egui::Key::T) && i.modifiers.ctrl) {
-			self.indent_with_tabs();
+			self.tabs[self.selected_tab.to_index()].refresh();
 		}
 		
 		if ctx.input( |i| i.key_pressed(egui::Key::S) && i.modifiers.ctrl) {

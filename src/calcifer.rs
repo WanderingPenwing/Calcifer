@@ -1,17 +1,21 @@
 use eframe::egui;
 use egui::{text::CCursor, text_edit::CCursorRange};
-use std::{env, path::Path, path::PathBuf, cmp::max, io, fs, cmp::min};
+use std::{env, path::Path, cmp::max};
+
 use crate::tools;
+use crate::Calcifer;
 use crate::TIME_LABELS;
 use crate::PATH_ROOT;
+use crate::MAX_TABS;
 
 pub mod code_editor;
 use code_editor::CodeEditor;
 use code_editor::themes::DEFAULT_THEMES;
 
+mod app_base;
 
 
-impl super::Calcifer {
+impl Calcifer {
 	pub fn draw_settings(&mut self, ctx: &egui::Context) {
 		egui::TopBottomPanel::top("settings")
 			.resizable(false)
@@ -19,7 +23,7 @@ impl super::Calcifer {
 				ui.horizontal(|ui| {
 					if ui.add(egui::Button::new("open file")).clicked() {
 						if let Some(path) = rfd::FileDialog::new().set_directory(Path::new(&PATH_ROOT)).pick_file() {
-							self.selected_tab = self.open_file(&path);
+							self.open_file(Some(&path));
 						}
 					}
 					ui.separator();
@@ -53,6 +57,7 @@ impl super::Calcifer {
 			});
 	}
 	
+	
 	pub fn draw_tree_panel(&mut self, ctx: &egui::Context) {
 		if !self.tree_display {
 			return
@@ -64,7 +69,8 @@ impl super::Calcifer {
 			ui.separator();
 		});
 	}
-
+	
+	
 	pub fn draw_terminal_panel(&mut self, ctx: &egui::Context) {
 		egui::TopBottomPanel::bottom("terminal")
 			.default_height(super::TERMINAL_HEIGHT.clone())
@@ -113,6 +119,7 @@ impl super::Calcifer {
 			});
 	}
 	
+	
 	pub fn draw_tab_panel(&mut self, ctx: &egui::Context) {
 		egui::TopBottomPanel::top("tabs")
 			.resizable(false)
@@ -137,16 +144,17 @@ impl super::Calcifer {
 						}
 						ui.separator();
 					}
-					if tools::TabNumber::from_index(self.tabs.len()) != tools::TabNumber::None {
+					if self.tabs.len() < MAX_TABS {
 						ui.selectable_value(&mut self.selected_tab, tools::TabNumber::Open, "+");
 					}
 					if self.selected_tab == tools::TabNumber::Open {
-						self.selected_tab = self.new_tab();
+						self.open_file(None);
 					}
 				});
 			});
 	}
-
+	
+	
 	pub fn draw_content_panel(&mut self, ctx: &egui::Context) {
 		egui::CentralPanel::default().show(ctx, |ui| {
 			ui.horizontal(|ui| {
@@ -159,15 +167,13 @@ impl super::Calcifer {
 				ui.label("Picked file:");
 				ui.monospace(self.tabs[self.selected_tab.to_index()].path.to_string_lossy().to_string());
 			});
-			ui.separator();
 			
-			if self.selected_tab == tools::TabNumber::None {
-				return
-			}
+			ui.separator();
 			
 			self.draw_code_file(ui);
 		});
 	}
+	
 	
 	fn draw_code_file(&mut self, ui: &mut egui::Ui) {
 		let current_tab = &mut self.tabs[self.selected_tab.to_index()];
@@ -189,156 +195,5 @@ impl super::Calcifer {
 					  	.with_syntax(tools::to_syntax(&current_tab.language))
 					  	.with_numlines(true)
 					  	.show(ui, &mut current_tab.code, &mut current_tab.saved, &mut current_tab.last_cursor, &mut current_tab.scroll_offset, override_cursor);
-	}
-
-	pub fn save_tab(&self) -> Option<PathBuf> {
-		if self.tabs[self.selected_tab.to_index()].path.file_name().expect("Could not get Tab Name").to_string_lossy().to_string() == "untitled" {
-			return self.save_tab_as();
-		} else {
-			if let Err(err) = fs::write(&self.tabs[self.selected_tab.to_index()].path, &self.tabs[self.selected_tab.to_index()].code) {
-				eprintln!("Error writing file: {}", err);
-				return None;
-			}
-			return Some(self.tabs[self.selected_tab.to_index()].path.clone())
-		}
-	}
-	
-	pub fn save_tab_as(&self) -> Option<PathBuf> {
-		if let Some(path) = rfd::FileDialog::new().save_file() {
-			if let Err(err) = fs::write(&path, &self.tabs[self.selected_tab.to_index()].code) {
-				eprintln!("Error writing file: {}", err);
-				return None;
-			}
-			return Some(path);
-		}
-		return None
-	}
-	
-	pub fn handle_save_file(&mut self, path_option : Option<PathBuf>) {
-		if let Some(path) = path_option {
-			println!("File saved successfully at: {:?}", path);
-			self.tabs[self.selected_tab.to_index()].path = path;
-			self.tabs[self.selected_tab.to_index()].saved = true;
-		} else {
-			println!("File save failed.");
-		}
-	}
-	
-	pub fn from_app_state(app_state: tools::AppState) -> Self {
-		let mut new = Self {
-			theme: DEFAULT_THEMES[min(app_state.theme, DEFAULT_THEMES.len() - 1)],
-			tabs: Vec::new(),
-			..Default::default()
-		};
-		
-		for path in app_state.tabs {
-			if path.file_name().expect("Could not get Tab Name").to_string_lossy().to_string() != "untitled" {
-				new.open_file(&path);
-			}
-		}
-		
-		if new.tabs == vec![] {
-			new.new_tab();
-		}
-		
-		new
-	}
-	
-	pub fn save_state(&self) {
-		let mut state_theme : usize = 0;
-		if let Some(theme) = DEFAULT_THEMES.iter().position(|&r| r == self.theme) {
-			state_theme = theme;
-		}
-		
-		let mut state_tabs = vec![];
-		
-		for tab in &self.tabs {
-			state_tabs.push(tab.path.clone());
-		}
-		let app_state = tools::AppState {
-			tabs: state_tabs,
-			theme: state_theme,
-		};
-		
-		let _ = tools::save_state(&app_state, super::SAVE_PATH);
-	}
-	
-	pub fn indent_with_tabs(&mut self) {
-		let current_tab = &mut self.tabs[self.selected_tab.to_index()];
-		current_tab.code = current_tab.code.replace("	", "\t")
-	}
-	
-	pub fn move_through_tabs(&mut self, forward : bool) {
-		let new_index = if forward {
-			(self.selected_tab.to_index() + 1) % self.tabs.len()
-		} else {
-			self.selected_tab.to_index().checked_sub(1).unwrap_or(self.tabs.len() - 1)
-		};
-		self.selected_tab = tools::TabNumber::from_index(new_index);
-	}
-	
-	fn list_files(&mut self, ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
-		if let Some(name) = path.file_name() {
-			if path.is_dir() {
-				egui::CollapsingHeader::new(name.to_string_lossy()).show(ui, |ui| {
-					let mut paths: Vec<_> = fs::read_dir(&path).expect("Failed to read dir").map(|r| r.unwrap()).collect();
-												  
-					// Sort the vector using the custom sorting function
-					paths.sort_by(|a, b| tools::sort_directories_first(a, b));
-
-					for result in paths {
-						//let result = path_result.expect("Failed to get path");
-						//let full_path = result.path();
-						let _ = self.list_files(ui, &result.path());
-					}
-				});
-			} else {
-				//ui.label(name.to_string_lossy());
-				if ui.button(name.to_string_lossy()).clicked() {
-					self.selected_tab = self.open_file(&path);
-				}
-			}
-		}
-		Ok(())
-	}
-	
-	fn open_file(&mut self, path: &Path) -> tools::TabNumber {
-		if tools::TabNumber::from_index(self.tabs.len()) == tools::TabNumber::None {
-			return tools::TabNumber::None
-		}
-		
-		let new_tab = tools::Tab {
-			path: path.into(),
-			code: fs::read_to_string(path).expect("Not able to read the file").replace("	", "\t"),
-			language: path.to_str().unwrap().split('.').last().unwrap().into(),
-			saved: true,
-			..tools::Tab::default()
-		};
-		self.tabs.push(new_tab);
-		
-		return tools::TabNumber::from_index(self.tabs.len() - 1)
-	}
-
-	fn new_tab(&mut self) -> tools::TabNumber {
-		self.tabs.push(tools::Tab::default());
-		return tools::TabNumber::from_index(self.tabs.len() - 1)
-	}
-	
-	fn delete_tab(&mut self, index : usize) -> tools::TabNumber {
-		self.tabs.remove(index);
-		return tools::TabNumber::from_index(min(index, self.tabs.len() - 1))
-	}
-	
-	fn toggle(&self, ui: &mut egui::Ui, display : bool, title : &str) -> bool {
-		let text = if display.clone() {
-			format!("hide {}", title)
-		} else {
-			format!("show {}", title)
-		};
-					
-		if ui.add(egui::Button::new(text)).clicked() {
-			return !display
-		}
-		return display
 	}
 }

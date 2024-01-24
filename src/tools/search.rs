@@ -1,5 +1,5 @@
 use eframe::egui;
-use crate::tools::{View, Demo, Tab, TabNumber};
+use crate::tools::{View, Demo, tabs::Tab, tabs::TabNumber};
 use std::{cmp::min};
 use crate::RED;
 
@@ -24,7 +24,7 @@ pub struct Selection {
 impl Default for Selection {
 	fn default() -> Self {
 		Self {
-			tab: TabNumber::Zero,
+			tab: TabNumber::from_index(0),
 			start: 0,
 			end: 0,
 		}
