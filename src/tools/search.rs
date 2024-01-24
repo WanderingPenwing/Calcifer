@@ -1,7 +1,8 @@
-use eframe::egui;
-use crate::tools::{View, Demo, tabs::Tab, tabs::TabNumber};
 use std::{cmp::min};
+use eframe::egui;
+
 use crate::RED;
+use crate::tools::{tabs::Tab, tabs::TabNumber};
 
 
 enum Action {
@@ -33,6 +34,8 @@ impl Default for Selection {
 
 
 pub struct SearchWindow {
+	pub visible: bool,
+	
 	search_text: String,
 	searched_text: String,
 	replace_text: String,
@@ -44,7 +47,6 @@ pub struct SearchWindow {
 	results: Vec<Selection>,
 	current_result: usize,
 
-	pub tab_selected: bool,
 	pub result_selected: bool,
 }
 
@@ -52,6 +54,8 @@ pub struct SearchWindow {
 impl Default for SearchWindow {
 	fn default() -> Self {
 		Self {
+			visible: false,
+			
 			search_text: "".into(),
 			searched_text: "".into(),
 			replace_text: "".into(),
@@ -63,29 +67,24 @@ impl Default for SearchWindow {
 			results: vec![],
 			current_result: 0,
 
-			tab_selected: true,
 			result_selected: true,
 		}
 	}
 }
 
 
-impl Demo for SearchWindow {
-	fn name(&self) -> &str { //'static
-		"Search"
-	}
-
-	fn show(&mut self, ctx: &egui::Context, open: &mut bool, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
-		egui::Window::new(self.name())
-			.open(open)
+impl SearchWindow {
+	pub fn show(&mut self, ctx: &egui::Context, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
+		let mut visible = self.visible.clone();
+		egui::Window::new("Search")
+			.open(&mut visible) //I want it to be able to change its visibility (if user close manually)
 			.vscroll(true)
 			.hscroll(true)
-			.show(ctx, |ui| self.ui(ui, tabs, selected_tab));
+			.show(ctx, |ui| self.ui(ui, tabs, selected_tab)); //but I want to edit the rest of the parameters and maybe close automatically
+		self.visible = self.visible.clone() && visible;
 	}
-}
-
-
-impl View for SearchWindow {
+	
+	
 	fn ui(&mut self, ui: &mut egui::Ui, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
 		ui.set_min_width(250.0);
 
@@ -142,28 +141,25 @@ impl View for SearchWindow {
 
 		match action {
 			Action::Update => self.search(tabs, selected_tab),
-			Action::Next => self.find_next(tabs, selected_tab),
-			Action::Previous => self.find_previous(tabs, selected_tab),
+			Action::Next => self.find_result(tabs, selected_tab, 1),
+			Action::Previous => self.find_result(tabs, selected_tab, -1),
 			Action::Replace => self.replace(tabs, selected_tab),
 			Action::None => (),
 		}
 	}
-}
-
-impl SearchWindow {
-	pub fn get_tab(&self) -> TabNumber {
-		self.results[self.current_result].tab.clone()
-	}
-
+	
+	
 	pub fn get_cursor_start(&self) -> usize {
 		self.results[self.current_result].start.clone()
 	}
 
+
 	pub fn get_cursor_end(&self) -> usize {
 		self.results[self.current_result].end.clone()
 	}
+	
 
-	fn search(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
+	fn search(&mut self, tabs: &Vec<Tab>, selected_tab: &mut TabNumber) {
 		if self.search_text.len() == 0 {
 			return
 		}
@@ -184,9 +180,10 @@ impl SearchWindow {
 		self.current_result = 0;
 		if self.results.len() > 0 {
 			self.result_selected = false;
-			self.tab_selected = false;
+			*selected_tab = self.results[0].tab.clone();
 		}
 	}
+
 
 	fn match_text(&self, tab_text: String, tab_number: TabNumber) -> Vec<Selection> {
 		let matches = tab_text.match_indices(&self.search_text.clone()).map(|(i, _)| Selection {
@@ -198,33 +195,21 @@ impl SearchWindow {
 		matches
 	}
 
-	fn find_next(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
-		if self.searched_text != self.search_text {
-			self.search(tabs, selected_tab);
-		} else if self.results.len() > 1 {
-			self.current_result = (self.current_result.clone() + 1) % self.results.len();
-			self.result_selected = false;
-			if self.results[self.current_result].tab != *selected_tab {
-				self.tab_selected = false;
-			}
-		}
+
+	fn find_result(&mut self, tabs: &Vec<Tab>, selected_tab: &mut TabNumber, direction: i32) {
+	    if self.searched_text != self.search_text {
+	        self.search(tabs, &mut *selected_tab);
+	    } else if self.results.len() > 1 {
+	        self.current_result = (self.current_result as i32 + direction + self.results.len() as i32) as usize % self.results.len();
+	        self.result_selected = false;
+	        *selected_tab = self.results[self.current_result].tab.clone();
+	    }
 	}
 
-	fn find_previous(&mut self, tabs: &Vec<Tab>, selected_tab: &TabNumber) {
-		if self.searched_text != self.search_text {
-			self.search(tabs, selected_tab);
-		} else {
-			self.current_result = self.current_result.checked_sub(1).unwrap_or(self.results.len() - 1);
-			self.result_selected = false;
-			if self.results[self.current_result].tab != *selected_tab {
-				self.tab_selected = false;
-			}
-		}
-	}
 
-	fn replace(&mut self, tabs: &mut Vec<Tab>, selected_tab: &TabNumber) {
+	fn replace(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
 		if self.searched_text != self.search_text {
-			self.search(tabs, selected_tab);
+			self.search(tabs, &mut *selected_tab);
 		}
 
 		for element in &self.results {

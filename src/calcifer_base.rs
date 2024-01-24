@@ -1,6 +1,12 @@
 // Hello there, Master
 
 impl super::Calcifer {
+	pub fn handle_confirm(&mut self) {
+		if self.close_tab_confirm.proceed {
+			self.close_tab_confirm.close();
+			self.delete_tab(self.tab_to_close);
+		}
+	}
 	pub fn save_tab(&self) -> Option<PathBuf> {
 		if self.tabs[self.selected_tab.to_index()].path.file_name().expect("Could not get Tab Name").to_string_lossy().to_string() == "untitled" {
 			return self.save_tab_as();
@@ -118,9 +124,9 @@ impl super::Calcifer {
 		}
 	}
 	
-	fn delete_tab(&mut self, index : usize) -> tools::TabNumber {
+	fn delete_tab(&mut self, index : usize) {
 		self.tabs.remove(index);
-		return tools::TabNumber::from_index(min(index, self.tabs.len() - 1))
+		self.selected_tab = tools::TabNumber::from_index(min(index, self.tabs.len() - 1));
 	}
 	
 	fn toggle(&self, ui: &mut egui::Ui, display : bool, title : &str) -> bool {
@@ -135,3 +141,4 @@ impl super::Calcifer {
 		}
 		return display
 	}
+}

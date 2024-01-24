@@ -5,24 +5,24 @@ use crate::MAX_TABS;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TabNumber {
-    Open, 
-    Number(u8), // Using a range for numeric values
+	Open, 
+	Number(u8), // Using a range for numeric values
 }
 
 impl TabNumber {
-    pub fn from_index(n: usize) -> TabNumber {
-        match n {
-            0..=MAX_TABS => TabNumber::Number(n as u8),
-            _ => TabNumber::Number(0),
-        }
-    }
+	pub fn from_index(n: usize) -> TabNumber {
+		match n {
+			0..=MAX_TABS => TabNumber::Number(n as u8),
+			_ => TabNumber::Number(0),
+		}
+	}
 
-    pub fn to_index(&self) -> usize {
-        match self {
-            TabNumber::Number(n) => *n as usize,
-            _ => 0,
-        }
-    }
+	pub fn to_index(&self) -> usize {
+		match self {
+			TabNumber::Number(n) => *n as usize,
+			_ => 0,
+		}
+	}
 }
 
 
@@ -68,6 +68,7 @@ impl Tab {
 	
 	pub fn refresh(&mut self) {
 		self.code = read_to_string(self.path.clone()).expect("Not able to read the file").replace(&" ".repeat(4), "\t");
+		self.saved = true;
 		println!("refreshed {}", self.path.display());
 	}
 }

@@ -6,27 +6,13 @@ use crate::DISPLAY_PATH_DEPTH;
 
 //my tools;
 pub mod search;
+pub mod confirm;
 
 pub mod terminal;
 pub use terminal::*;
 
 pub mod tabs;
 pub use tabs::*;
-
-
-
-pub trait View {
-	fn ui(&mut self, ui: &mut egui::Ui, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber);
-}
-
-/// Something to view
-pub trait Demo {
-	fn name(&self) -> &str; //'static 
-	/// Show windows, etc
-	fn show(&mut self, ctx: &egui::Context, open: &mut bool, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber);
-}
-
-
 
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

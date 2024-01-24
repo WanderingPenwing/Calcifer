@@ -139,8 +139,13 @@ impl Calcifer {
 						
 						ui.style_mut().visuals.override_text_color = None;
 						
-						if ui.link("X").clicked() {
-							self.selected_tab = self.delete_tab(index);
+						if ui.link("X").clicked() && !self.close_tab_confirm.visible {
+							if tab.saved {
+								self.delete_tab(index);
+							} else {
+								self.close_tab_confirm.ask();
+								self.tab_to_close = index;
+							}
 						}
 						ui.separator();
 					}
@@ -180,7 +185,7 @@ impl Calcifer {
 		let lines = current_tab.code.chars().filter(|&c| c == '\n').count() + 1;
 		let mut override_cursor : Option<CCursorRange> = None;
 
-		if !self.search.result_selected && self.search.tab_selected {
+		if !self.search.result_selected {
 			override_cursor = Some(CCursorRange::two(
 							CCursor::new(self.search.get_cursor_start()),
 							CCursor::new(self.search.get_cursor_end()),
