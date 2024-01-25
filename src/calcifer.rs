@@ -1,5 +1,5 @@
 use eframe::egui;
-use egui::{text::CCursor, text_edit::CCursorRange};
+use egui::{text::CCursor, text_edit::CCursorRange, Rangef};
 use std::{env, path::Path, cmp::max};
 
 use crate::tools;
@@ -26,19 +26,22 @@ impl Calcifer {
 						}
 					}
 					ui.separator();
-					self.tree_display = self.toggle(ui, self.tree_display, "🗐");
+					self.tree_visible = self.toggle(ui, self.tree_visible, "🗐");
+					ui.separator();
+					self.terminal_visible = self.toggle(ui, self.terminal_visible, "🖵");
 					ui.separator();
 					self.settings_menu.visible = self.toggle(ui, self.settings_menu.visible, "⚙");
 					ui.separator();
-					self.profiler_menu.visible = self.toggle(ui, self.profiler_menu.visible, "🗠");
+					self.shortcuts_menu.visible = self.toggle(ui, self.shortcuts_menu.visible, "⌨");
 					ui.separator();
+					self.profiler_visible = self.toggle(ui, self.profiler_visible, "🗠");
 				});
 			});
 	}
 	
 	
 	pub fn draw_tree_panel(&mut self, ctx: &egui::Context) {
-		if !self.tree_display {
+		if !self.tree_visible {
 			return
 		}
 		egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
@@ -49,11 +52,24 @@ impl Calcifer {
 		});
 	}
 	
+	pub fn draw_bottom_tray(&mut self, ctx: &egui::Context) {
+		egui::TopBottomPanel::bottom("tray")
+			.default_height(self.font_size * 1.2)
+			.resizable(false)
+			.show(ctx, |ui| {
+				ui.label(self.profiler());		
+			});
+	}
+	
 	
 	pub fn draw_terminal_panel(&mut self, ctx: &egui::Context) {
+		if !self.terminal_visible {
+			return
+		}
 		egui::TopBottomPanel::bottom("terminal")
 			.default_height(super::TERMINAL_HEIGHT.clone())
-			.min_height(0.0)
+			.height_range(Rangef::new(super::TERMINAL_RANGE.start, super::TERMINAL_RANGE.end))
+			.resizable(true)
 			.show(ctx, |ui| {
 				ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
 					let command_color = egui::Color32::from_hex(self.theme.functions).expect("Theme color issue (functions)");
@@ -61,6 +77,7 @@ impl Calcifer {
 					let bg_color = egui::Color32::from_hex(self.theme.bg).expect("Theme color issue (bg)");
 					
 					ui.label("");
+					
 					ui.horizontal(|ui| {
 						ui.style_mut().visuals.extreme_bg_color = bg_color;
 						let Self { command, .. } = self;
@@ -192,8 +209,8 @@ impl Calcifer {
 		if self.refresh_confirm.visible {
 			self.refresh_confirm.show(ctx);
 		}
-		if self.profiler_menu.visible {
-			self.profiler_menu.show(ctx, self.time_watch.clone());
+		if self.shortcuts_menu.visible {
+			self.shortcuts_menu.show(ctx);
 		}
 		if self.settings_menu.visible {
 			self.settings_menu.show(ctx);

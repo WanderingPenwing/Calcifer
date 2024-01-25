@@ -8,6 +8,7 @@ use crate::PATH_ROOT;
 use crate::DEFAULT_THEMES;
 use crate::MAX_TABS;
 use crate::SAVE_PATH;
+use crate::TIME_LABELS;
 
 
 impl Calcifer {
@@ -162,5 +163,17 @@ impl Calcifer {
 			return !display
 		}
 		return display
+	}
+	
+	pub fn profiler(&self) -> String {
+		if !self.profiler_visible {
+			return "".to_string()
+		}
+		let combined_string: Vec<String> = TIME_LABELS.into_iter().zip(self.time_watch.clone().into_iter())
+			.map(|(s, v)| format!("{} : {:.1} ms", s, v)).collect();
+
+		let mut result = combined_string.join(" ;  ");
+		result.push_str(&format!("	total : {:.1} ms", self.time_watch.clone().iter().sum::<f32>()));
+		return result
 	}
 }

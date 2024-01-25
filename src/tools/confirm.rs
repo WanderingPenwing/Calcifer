@@ -23,10 +23,10 @@ impl ConfirmWindow {
 	pub fn show(&mut self, ctx: &egui::Context) {
 		let mut visible = self.visible.clone();
 		egui::Window::new(self.id.clone())
-			.open(&mut visible) //I want it to be able to change its visibility (if user close manually)
+			.open(&mut visible)
 			.vscroll(true)
 			.hscroll(true)
-			.show(ctx, |ui| self.ui(ui)); //but I want to edit the rest of the parameters and maybe close automatically
+			.show(ctx, |ui| self.ui(ui));
 		self.visible = self.visible.clone() && visible;
 	}
 	

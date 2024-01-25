@@ -9,7 +9,7 @@ use toml::Value;
 pub mod search;
 pub mod confirm;
 pub mod settings;
-pub mod profiler;
+pub mod shortcuts;
 
 pub mod terminal;
 pub use terminal::*;
