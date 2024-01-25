@@ -12,13 +12,13 @@ use calcifer::code_editor::themes::DEFAULT_THEMES;
 
 #[cfg(debug_assertions)]
 mod build {
-	pub const SAVE_PATH : &str = "/var/lib/calcifer/debug/calcifer_save.json";
+	pub const SAVE_PATH : &str = "/home/penwing/Documents/.save/debug/calcifer_save.json";
 	pub const TITLE: &str = " debug";
 }
 
 #[cfg(not(debug_assertions))]
 mod build {
-	pub const SAVE_PATH : &str = "/var/lib/calcifer/calcifer_save.json";
+	pub const SAVE_PATH : &str = "/home/penwing/Documents/calcifer_save.json";
 	pub const TITLE: &str = "";
 }
 

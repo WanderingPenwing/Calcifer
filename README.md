@@ -44,6 +44,4 @@ Added confirm prompt if unsaved
 Async terminal !  
 Real Ui  
 
-# 1.0.1 :
-
-Fixed sterr not streamed
+# 1.1.0 :
