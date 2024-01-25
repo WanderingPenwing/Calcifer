@@ -4,6 +4,9 @@ mod calcifer;
 use eframe::egui;
 use calcifer::code_editor::ColorTheme;
 use std::{path::Path, sync::Arc, time, thread};
+use egui::FontFamily::Proportional;
+use egui::FontId;
+use egui::TextStyle::{Small, Button, Body, Heading, Monospace};
 
 use calcifer::code_editor::themes::DEFAULT_THEMES;
 
@@ -24,7 +27,7 @@ use build::TITLE;
 
 const TERMINAL_HEIGHT : f32 = 200.0;
 const RED : egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
-const TIME_LABELS : [&str; 5] = ["settings", "tree", "terminal", "tabs", "content"];
+const TIME_LABELS : [&str; 7] = ["input", "settings", "tree", "terminal", "tabs", "content", "windows"];
 const MAX_FPS : f32 = 30.0;
 const PATH_ROOT : &str = "/home/penwing/Documents/";
 const DISPLAY_PATH_DEPTH : usize = 3;
@@ -68,18 +71,19 @@ struct Calcifer {
 
 	theme: ColorTheme,
 	font_size: f32,
-
-	search: tools::search::SearchWindow,
-	
-	debug_display: bool,
-	time_watch: Vec<f32>,
-	next_frame: time::Instant,
 	
 	tree_display: bool,
 	
 	close_tab_confirm: tools::confirm::ConfirmWindow,
 	tab_to_close: usize,
 	refresh_confirm: tools::confirm::ConfirmWindow,
+	
+	search: tools::search::SearchWindow,
+	settings_menu: tools::settings::SettingsWindow,
+	profiler_menu: tools::profiler::ProfilerWindow,
+	
+	time_watch: Vec<f32>,
+	next_frame: time::Instant,
 }
 
 
@@ -94,18 +98,19 @@ impl Default for Calcifer {
 
 			theme: DEFAULT_THEMES[0],
 			font_size: 14.0,
-
-			search: tools::search::SearchWindow::default(),
-			
-			debug_display: false,
-			time_watch: vec![0.0; TIME_LABELS.len()],
-			next_frame: time::Instant::now(),
 			
 			tree_display: false,
 			
 			close_tab_confirm: tools::confirm::ConfirmWindow::new("You have some unsaved changes, Do you still want to close this document ?", "Confirm Close"),
 			tab_to_close: 0,
 			refresh_confirm: tools::confirm::ConfirmWindow::new("You have some unsaved changes, Do you still want to refresh this document ?", "Confirm Refresh"),
+			
+			search: tools::search::SearchWindow::default(),
+			settings_menu: tools::settings::SettingsWindow::new(DEFAULT_THEMES[0]),
+			profiler_menu: tools::profiler::ProfilerWindow::new(),
+			
+			time_watch: vec![0.0; TIME_LABELS.len()],
+			next_frame: time::Instant::now(),
 		}
 	}
 }
@@ -117,6 +122,17 @@ impl eframe::App for Calcifer {
 		self.next_frame = time::Instant::now();
 		
 		let mut watch = time::Instant::now();
+		
+		let mut style = (*ctx.style()).clone();
+	    style.text_styles = [
+	        (Heading, FontId::new(self.font_size * 1.6, Proportional)),
+	        (Body, FontId::new(self.font_size, Proportional)),
+	        (Monospace, FontId::new(self.font_size, Proportional)),
+	        (Button, FontId::new(self.font_size, Proportional)),
+	        (Small, FontId::new(self.font_size, Proportional)),
+	    ]
+	    .into();
+	    ctx.set_style(style);
 		
 		if ctx.input( |i| i.key_pressed(egui::Key::T) && i.modifiers.ctrl) && !self.refresh_confirm.visible {
 			if self.tabs[self.selected_tab.to_index()].saved {
@@ -155,35 +171,37 @@ impl eframe::App for Calcifer {
 			self.search.initialized = !self.search.visible.clone();
 		}
 		
-		self.draw_settings(ctx);
-		
 		self.time_watch[0] = watch.elapsed().as_micros() as f32 / 1000.0;
 		watch = time::Instant::now();
 		
-		self.draw_tree_panel(ctx);
+		self.draw_settings(ctx);
 		
 		self.time_watch[1] = watch.elapsed().as_micros() as f32 / 1000.0;
 		watch = time::Instant::now();
 		
-		self.draw_terminal_panel(ctx);
+		self.draw_tree_panel(ctx);
 		
 		self.time_watch[2] = watch.elapsed().as_micros() as f32 / 1000.0;
 		watch = time::Instant::now();
 		
-		self.draw_tab_panel(ctx);
+		self.draw_terminal_panel(ctx);
 		
 		self.time_watch[3] = watch.elapsed().as_micros() as f32 / 1000.0;
 		watch = time::Instant::now();
 		
-		self.draw_content_panel(ctx);
+		self.draw_tab_panel(ctx);
 		
 		self.time_watch[4] = watch.elapsed().as_micros() as f32 / 1000.0;
-
-		self.search.show(ctx, &mut self.tabs, &mut self.selected_tab);
-		self.close_tab_confirm.show(ctx, &mut self.tabs, &mut self.selected_tab);
-		self.refresh_confirm.show(ctx, &mut self.tabs, &mut self.selected_tab);
+		watch = time::Instant::now();
 		
-		self.handle_confirm();
+		self.draw_content_panel(ctx);
+		
+		self.time_watch[5] = watch.elapsed().as_micros() as f32 / 1000.0;
+		watch = time::Instant::now();
+		
+		self.draw_windows(ctx);
+		
+		self.time_watch[6] = watch.elapsed().as_micros() as f32 / 1000.0;
 	}
 	
 	fn on_exit(&mut self, _gl : std::option::Option<&eframe::glow::Context>) {

@@ -1,5 +1,4 @@
 use eframe::egui;
-use crate::tools::{Tab, TabNumber};
 
 
 pub struct ConfirmWindow {
@@ -21,18 +20,18 @@ impl ConfirmWindow {
 	}
 	
 	
-	pub fn show(&mut self, ctx: &egui::Context, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
+	pub fn show(&mut self, ctx: &egui::Context) {
 		let mut visible = self.visible.clone();
 		egui::Window::new(self.id.clone())
 			.open(&mut visible) //I want it to be able to change its visibility (if user close manually)
 			.vscroll(true)
 			.hscroll(true)
-			.show(ctx, |ui| self.ui(ui, tabs, selected_tab)); //but I want to edit the rest of the parameters and maybe close automatically
+			.show(ctx, |ui| self.ui(ui)); //but I want to edit the rest of the parameters and maybe close automatically
 		self.visible = self.visible.clone() && visible;
 	}
 	
 	
-	fn ui(&mut self, ui: &mut egui::Ui, _tabs: &mut Vec<Tab>, _selected_tab: &mut TabNumber) {
+	fn ui(&mut self, ui: &mut egui::Ui) {
 		ui.set_min_width(250.0);
 		ui.label(self.prompt.clone());
 		ui.vertical_centered(|ui| {

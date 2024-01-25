@@ -8,6 +8,8 @@ use toml::Value;
 //my tools;
 pub mod search;
 pub mod confirm;
+pub mod settings;
+pub mod profiler;
 
 pub mod terminal;
 pub use terminal::*;
@@ -27,16 +29,16 @@ pub fn save_state(state: &AppState, file_path: &str) -> Result<(), std::io::Erro
 	let serialized_state = serde_json::to_string(state)?;
 	
 	if let Some(parent_dir) = Path::new(file_path).parent() {
-        fs::create_dir_all(parent_dir)?;
-    }
+		fs::create_dir_all(parent_dir)?;
+	}
 
 	let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(file_path)?;
+		.write(true)
+		.create(true)
+		.truncate(true)
+		.open(file_path)?;
 
-    file.write_all(serialized_state.as_bytes())?;
+	file.write_all(serialized_state.as_bytes())?;
 	
 	println!("Saved state at {}", file_path);
 
@@ -110,21 +112,21 @@ pub fn format_path(path: &Path) -> String {
 }
 
 pub fn version() -> String {
-    // Read the contents of the Cargo.toml file
-    let toml_content = fs::read_to_string("Cargo.toml").expect("Failed to read Cargo.toml");
+	// Read the contents of the Cargo.toml file
+	let toml_content = fs::read_to_string("Cargo.toml").expect("Failed to read Cargo.toml");
 
-    // Parse the TOML content
-    let toml: Value = toml::from_str(&toml_content).expect("Failed to parse TOML");
+	// Parse the TOML content
+	let toml: Value = toml::from_str(&toml_content).expect("Failed to parse TOML");
 
-    // Extract version information
-    if let Some(package) = toml.get("package") {
-        if let Some(version) = package.get("version") {
-            if let Some(version_string) = version.as_str() {
-                println!("Version: {}", version_string);
-                return version_string.to_string()
-            }
-        }
-    }
+	// Extract version information
+	if let Some(package) = toml.get("package") {
+		if let Some(version) = package.get("version") {
+			if let Some(version_string) = version.as_str() {
+				println!("Version: {}", version_string);
+				return version_string.to_string()
+			}
+		}
+	}
 	return "".to_string()
 }
 

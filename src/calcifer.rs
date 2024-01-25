@@ -4,55 +4,34 @@ use std::{env, path::Path, cmp::max};
 
 use crate::tools;
 use crate::Calcifer;
-use crate::TIME_LABELS;
 use crate::PATH_ROOT;
 use crate::MAX_TABS;
 
 pub mod code_editor;
 use code_editor::CodeEditor;
-use code_editor::themes::DEFAULT_THEMES;
 
 mod app_base;
 
 
 impl Calcifer {
 	pub fn draw_settings(&mut self, ctx: &egui::Context) {
-		egui::TopBottomPanel::top("settings")
+		egui::SidePanel::left("settings")
 			.resizable(false)
+			.exact_width(self.font_size * 1.8)
 			.show(ctx, |ui| {
-				ui.horizontal(|ui| {
-					if ui.add(egui::Button::new("open file")).clicked() {
+				ui.vertical(|ui| {
+					if ui.add(egui::Button::new("📁")).clicked() {
 						if let Some(path) = rfd::FileDialog::new().set_directory(Path::new(&PATH_ROOT)).pick_file() {
 							self.open_file(Some(&path));
 						}
 					}
 					ui.separator();
-					
-					ui.label("Theme ");
-					egui::ComboBox::from_label("")
-						.selected_text(format!("{}", self.theme.name))
-						.show_ui(ui, |ui| {
-							ui.style_mut().wrap = Some(false);
-							ui.set_min_width(60.0);
-							for theme in DEFAULT_THEMES {
-								ui.selectable_value(&mut self.theme, theme, theme.name);
-							}
-						});
-						
+					self.tree_display = self.toggle(ui, self.tree_display, "🗐");
 					ui.separator();
-					self.tree_display = self.toggle(ui, self.tree_display, "Tree");
+					self.settings_menu.visible = self.toggle(ui, self.settings_menu.visible, "⚙");
 					ui.separator();
-					self.debug_display = self.toggle(ui, self.debug_display, "Debug");
+					self.profiler_menu.visible = self.toggle(ui, self.profiler_menu.visible, "🗠");
 					ui.separator();
-					
-					if self.debug_display {
-						let combined_string: Vec<String> = TIME_LABELS.into_iter().zip(self.time_watch.clone().into_iter())
-							.map(|(s, v)| format!("{} : {:.1} ms", s, v)).collect();
-					
-						let mut result = combined_string.join(" ;  ");
-						result.push_str(&format!("	total : {:.1}", self.time_watch.clone().iter().sum::<f32>()));
-						ui.label(result);
-					}
 				});
 			});
 	}
@@ -201,5 +180,28 @@ impl Calcifer {
 					  	.with_syntax(tools::to_syntax(&current_tab.language))
 					  	.with_numlines(true)
 					  	.show(ui, &mut current_tab.code, &mut current_tab.saved, &mut current_tab.last_cursor, &mut current_tab.scroll_offset, override_cursor);
+	}
+	
+	pub fn draw_windows(&mut self, ctx: &egui::Context) {
+		if self.search.visible {
+			self.search.show(ctx, &mut self.tabs, &mut self.selected_tab);
+		}
+		if self.close_tab_confirm.visible {
+			self.close_tab_confirm.show(ctx);
+		}
+		if self.refresh_confirm.visible {
+			self.refresh_confirm.show(ctx);
+		}
+		if self.profiler_menu.visible {
+			self.profiler_menu.show(ctx, self.time_watch.clone());
+		}
+		if self.settings_menu.visible {
+			self.settings_menu.show(ctx);
+		}
+		if self.settings_menu.updated {
+			self.theme = self.settings_menu.theme.clone();
+		}
+		
+		self.handle_confirm();
 	}
 }

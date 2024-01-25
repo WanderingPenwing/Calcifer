@@ -1,5 +1,6 @@
 use std::{path::PathBuf, fs, path::Path, cmp::min, io};
 use eframe::egui;
+use egui::Color32;
 
 use crate::Calcifer;
 use crate::tools;
@@ -62,6 +63,7 @@ impl Calcifer {
 		let mut new = Self {
 			theme: DEFAULT_THEMES[min(app_state.theme, DEFAULT_THEMES.len() - 1)],
 			tabs: Vec::new(),
+			settings_menu: tools::settings::SettingsWindow::new(DEFAULT_THEMES[app_state.theme]),
 			..Default::default()
 		};
 		
@@ -150,13 +152,13 @@ impl Calcifer {
 	
 	
 	pub fn toggle(&self, ui: &mut egui::Ui, display : bool, title : &str) -> bool {
-		let text = if display.clone() {
-			format!("hide {}", title)
+		let color = if display.clone() {
+			Color32::from_hex(self.theme.functions).expect("Could not convert color to hex (functions)")
 		} else {
-			format!("show {}", title)
+			Color32::from_hex(self.theme.bg).expect("Could not convert color to hex (bg)")
 		};
 					
-		if ui.add(egui::Button::new(text)).clicked() {
+		if ui.add(egui::Button::new(title).fill(color)).clicked() {
 			return !display
 		}
 		return display
