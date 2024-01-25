@@ -45,12 +45,11 @@ fn main() -> Result<(), eframe::Error> {
 		..Default::default()
 	};
 
-	;
 	// Attempt to load previous state
 	let app_state: tools::AppState = if Path::new(SAVE_PATH).exists() {
-		app_state = tools::load_state(SAVE_PATH).expect("Failed to load the save")
+		tools::load_state(SAVE_PATH).expect("Failed to load the save")
 	} else {
-		app_state = tools::AppState {tabs: vec![], theme: 0,}
+		tools::AppState {tabs: vec![], theme: 0,}
 	};
 
 	eframe::run_native(
