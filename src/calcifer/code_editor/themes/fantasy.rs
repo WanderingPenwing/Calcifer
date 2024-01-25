@@ -12,7 +12,7 @@ impl ColorTheme {
         comments: "#656565",    // dark_gray
         functions: "#ffad69",   // light orange
         keywords: "#48b1a7",    // mid green
-        literals: "#d2d2d3",    // 
+        literals: "#d2d2d3",    //
         numerics: "#ff7b4f",    // orange
         punctuation: "#989898", // gray
         strs: "#cbd5a1",        // light_green
@@ -20,7 +20,7 @@ impl ColorTheme {
         special: "#48b1a7",     // mid green
     };
 
-	pub const ASH: ColorTheme = ColorTheme {
+    pub const ASH: ColorTheme = ColorTheme {
         name: "Ash",
         dark: true,
         bg: "#101010",

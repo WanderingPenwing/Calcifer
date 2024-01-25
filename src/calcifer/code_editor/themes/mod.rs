@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 pub mod ayu;
+pub mod fantasy;
 pub mod github;
 pub mod gruvbox;
 pub mod sonokai;
-pub mod fantasy;
 
 use super::syntax::TokenType;
 
@@ -19,8 +19,8 @@ pub const DEFAULT_THEMES: [ColorTheme; 7] = [
     ColorTheme::GITHUB_DARK,
     ColorTheme::GRUVBOX,
     ColorTheme::SONOKAI,
-	ColorTheme::FIRE,
-	ColorTheme::ASH,
+    ColorTheme::FIRE,
+    ColorTheme::ASH,
 ];
 
 fn color_from_hex(hex: &str) -> Option<Color32> {

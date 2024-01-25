@@ -1,8 +1,8 @@
 use super::syntax::{Syntax, TokenType, QUOTES, SEPARATORS};
-use std::mem;
 use super::CodeEditor;
-use eframe::egui::text::LayoutJob;
 use eframe::egui;
+use eframe::egui::text::LayoutJob;
+use std::mem;
 
 #[derive(Default, Debug, PartialEq, PartialOrd, Eq, Ord)]
 /// Lexer and Token
@@ -222,8 +222,6 @@ impl Token {
     }
 }
 
-
-
 impl eframe::egui::util::cache::ComputerMut<(&CodeEditor, &str), LayoutJob> for Token {
     fn compute(&mut self, (cache, text): (&CodeEditor, &str)) -> LayoutJob {
         self.highlight(cache, text)
@@ -235,7 +233,6 @@ pub type HighlightCache = egui::util::cache::FrameCache<LayoutJob, Token>;
 pub fn highlight(ctx: &egui::Context, cache: &CodeEditor, text: &str) -> LayoutJob {
     ctx.memory_mut(|mem| mem.caches.cache::<HighlightCache>().get((cache, text)))
 }
-
 
 impl CodeEditor {
     fn append(&self, job: &mut LayoutJob, token: &Token) {
