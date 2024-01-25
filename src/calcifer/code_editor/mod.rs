@@ -303,11 +303,8 @@ impl CodeEditor {
                         {
                             if let Some(range) = last_cursor {
                                 if range.primary.index != range.secondary.index {
-                                    (*text, extend) = self.add_start_of_line(
-                                        *range,
-                                        previous_text.clone(),
-                                        "\t",
-                                    );
+                                    (*text, extend) =
+                                        self.add_start_of_line(*range, previous_text.clone(), "\t");
                                     get_new_cursor = false;
                                 }
                             }
@@ -337,8 +334,7 @@ impl CodeEditor {
                         } else if let Some(cursor_range) = *last_cursor {
                             let mut start =
                                 min(cursor_range.primary.index, cursor_range.secondary.index);
-                            let end =
-                                max(cursor_range.primary.index, cursor_range.secondary.index);
+                            let end = max(cursor_range.primary.index, cursor_range.secondary.index);
                             let extended = match end as isize + extend {
                                 // Check for overflow or negative result
                                 value if value < 0 => 0,
