@@ -153,15 +153,24 @@ impl Calcifer {
 	
 	
 	pub fn toggle(&self, ui: &mut egui::Ui, display : bool, title : &str) -> bool {
-		let color = if display.clone() {
-			Color32::from_hex(self.theme.functions).expect("Could not convert color to hex (functions)")
+		let bg_color : Color32;
+		let text_color : Color32;
+		
+		if display.clone() {
+			bg_color = Color32::from_hex(self.theme.functions).expect("Could not convert color to hex (functions)");
+			text_color = Color32::from_hex(self.theme.bg).expect("Could not convert color to hex (bg)");
 		} else {
-			Color32::from_hex(self.theme.bg).expect("Could not convert color to hex (bg)")
+			bg_color = Color32::from_hex(self.theme.bg).expect("Could not convert color to hex (bg)");
+			text_color = Color32::from_hex(self.theme.literals).expect("Could not convert color to hex (literals)");
 		};
-					
-		if ui.add(egui::Button::new(title).fill(color)).clicked() {
+		
+		ui.style_mut().visuals.override_text_color = Some(text_color);
+		
+		if ui.add(egui::Button::new(title).fill(bg_color)).clicked() {
 			return !display
 		}
+		ui.style_mut().visuals.override_text_color = None;
+		
 		return display
 	}
 	

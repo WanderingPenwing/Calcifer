@@ -90,7 +90,7 @@ impl Calcifer {
 						let response = ui.add(egui::TextEdit::singleline(command).desired_width(f32::INFINITY).lock_focus(true));
 
 						if response.lost_focus() && ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-							self.command_history.push(tools::run_command(self.command.clone()));
+							self.command_history.push(tools::send_command(self.command.clone()));
 							self.command = "".into();
 							response.request_focus();
 						}
@@ -172,7 +172,7 @@ impl Calcifer {
 				if ui.add(egui::Button::new("open in terminal")).clicked() {
 					let mut path = self.tabs[self.selected_tab.to_index()].path.clone();
 					path.pop();
-					tools::run_command(format!("cd {}", path.display()));
+					tools::send_command(format!("cd {}", path.display()));
 				}
 				
 				ui.label("Picked file:");

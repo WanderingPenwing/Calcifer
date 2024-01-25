@@ -13,12 +13,13 @@ pub struct CommandEntry {
 	pub output: String,
 	pub error: String,
 	pub output_buffer: BufReader<std::process::ChildStdout>,
+	pub error_buffer: BufReader<std::process::ChildStderr>,
 }
 
 
 impl CommandEntry {
 	pub fn new(command: String) -> Self {
-        let stdout_reader = execute(command.clone());
+		let (stdout_reader, stderr_reader) = execute(command.clone());
 
 		CommandEntry {
 			env: format_path(&env::current_dir().expect("Could not find Shell Environnment")),
@@ -26,6 +27,7 @@ impl CommandEntry {
 			output: String::new(),
 			error: String::new(),
 			output_buffer: stdout_reader,
+			error_buffer: stderr_reader,
 		}
 	}
 
@@ -35,11 +37,17 @@ impl CommandEntry {
 		if !output.is_empty() {
 			self.output += &output;
 		}
+		
+		let mut error = String::new();
+		let _ = self.error_buffer.read_line(&mut error);
+		if !error.is_empty() {
+			self.error += &error;
+		}
 	}
 }
 
 
-pub fn run_command(command: String) -> CommandEntry {
+pub fn send_command(command: String) -> CommandEntry {
 	if command.len() < 2 {
 		return CommandEntry::new(command);
 	}
@@ -75,11 +83,12 @@ pub fn run_command(command: String) -> CommandEntry {
 }
 
 
-pub fn execute(command: String) -> BufReader<std::process::ChildStdout> {
+pub fn execute(command: String) -> (BufReader<std::process::ChildStdout>, BufReader<std::process::ChildStderr>) {
 	let mut child = Command::new("sh")
 		.arg("-c")
 		.arg(command.clone())
 		.stdout(Stdio::piped())
+		.stderr(Stdio::piped())
 		.spawn()
 		.expect("failed to execute process");
 	
@@ -87,6 +96,11 @@ pub fn execute(command: String) -> BufReader<std::process::ChildStdout> {
 	let stdout_fd = stdout.as_raw_fd();
 
 	fcntl(stdout_fd, FcntlArg::F_SETFL(OFlag::O_NONBLOCK)).expect("Failed to set non-blocking mode");
+	
+	let stderr = child.stderr.take().unwrap();
+	let stderr_fd = stderr.as_raw_fd();
 
-	return BufReader::new(stdout);
+	fcntl(stderr_fd, FcntlArg::F_SETFL(OFlag::O_NONBLOCK)).expect("Failed to set non-blocking mode");
+
+	return (BufReader::new(stdout), BufReader::new(stderr));
 }
