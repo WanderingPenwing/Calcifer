@@ -48,6 +48,8 @@ pub struct SearchWindow {
 	current_result: usize,
 
 	pub result_selected: bool,
+	
+	row_height: f32,
 }
 
 
@@ -68,6 +70,8 @@ impl Default for SearchWindow {
 			current_result: 0,
 
 			result_selected: true,
+			
+			row_height: 0.0,
 		}
 	}
 }
@@ -87,6 +91,9 @@ impl SearchWindow {
 	
 	fn ui(&mut self, ui: &mut egui::Ui, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
 		ui.set_min_width(250.0);
+		
+		let font_id = egui::TextStyle::Body.resolve(ui.style());
+		self.row_height = ui.fonts(|f| f.row_height(&font_id)); //+ ui.spacing().item_spacing.y;
 
 		let mut action : Action = Action::None;
 
@@ -159,7 +166,7 @@ impl SearchWindow {
 	}
 	
 
-	fn search(&mut self, tabs: &Vec<Tab>, selected_tab: &mut TabNumber) {
+	fn search(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
 		if self.search_text.len() == 0 {
 			return
 		}
@@ -179,8 +186,7 @@ impl SearchWindow {
 		
 		self.current_result = 0;
 		if self.results.len() > 0 {
-			self.result_selected = false;
-			*selected_tab = self.results[0].tab.clone();
+			self.find_result(tabs, selected_tab, 0);
 		}
 	}
 
@@ -196,14 +202,20 @@ impl SearchWindow {
 	}
 
 
-	fn find_result(&mut self, tabs: &Vec<Tab>, selected_tab: &mut TabNumber, direction: i32) {
-	    if self.searched_text != self.search_text {
-	        self.search(tabs, &mut *selected_tab);
-	    } else if self.results.len() > 1 {
-	        self.current_result = (self.current_result as i32 + direction + self.results.len() as i32) as usize % self.results.len();
-	        self.result_selected = false;
-	        *selected_tab = self.results[self.current_result].tab.clone();
-	    }
+	fn find_result(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber, direction: i32) {
+		if self.searched_text != self.search_text {
+			self.search(tabs, &mut *selected_tab);
+		} else if self.results.len() > 0 {
+			self.current_result = (self.current_result as i32 + direction + self.results.len() as i32) as usize % self.results.len();
+			self.result_selected = false;
+			*selected_tab = self.results[self.current_result].tab.clone();
+			
+			let target = self.results[self.current_result].start;
+			let code = tabs[selected_tab.to_index()].code.clone();
+			let (upstream, _downstream) = code.split_at(target);
+			let row = upstream.match_indices(&"\n".to_string()).collect::<Vec<_>>().len();
+			tabs[selected_tab.to_index()].scroll_offset = self.row_height * row.saturating_sub(5) as f32;
+		}
 	}
 
 
