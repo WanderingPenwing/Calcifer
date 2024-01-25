@@ -283,7 +283,7 @@ impl CodeEditor {
                             && ui.input(|i| i.key_pressed(egui::Key::Enter))
                         {
                             if let Some(range) = last_cursor {
-                                (*text, extend) = self.new_line(range.clone(), text.clone());
+                                (*text, extend) = self.new_line(*range, text.clone());
                                 get_new_cursor = false;
                             }
                         }
@@ -293,7 +293,7 @@ impl CodeEditor {
                         {
                             if let Some(range) = last_cursor {
                                 (*text, extend) =
-                                    self.toggle_start_of_line(range.clone(), text.clone(), "//");
+                                    self.toggle_start_of_line(*range, text.clone(), "//");
                                 get_new_cursor = false;
                             }
                         }
@@ -304,7 +304,7 @@ impl CodeEditor {
                             if let Some(range) = last_cursor {
                                 if range.primary.index != range.secondary.index {
                                     (*text, extend) = self.add_start_of_line(
-                                        range.clone(),
+                                        *range,
                                         previous_text.clone(),
                                         "\t",
                                     );
@@ -319,7 +319,7 @@ impl CodeEditor {
                             if let Some(range) = last_cursor {
                                 if range.primary.index != range.secondary.index {
                                     (*text, extend) = self.remove_start_of_line(
-                                        range.clone(),
+                                        *range,
                                         previous_text.clone(),
                                         "\t",
                                     );
@@ -328,34 +328,32 @@ impl CodeEditor {
                             }
                         }
 
-                        if override_cursor != None {
+                        if override_cursor.is_some() {
                             output.response.request_focus();
                             output.state.set_ccursor_range(override_cursor);
                             output.state.store(ui.ctx(), output.response.id);
                         } else if get_new_cursor {
                             *last_cursor = output.state.clone().ccursor_range();
-                        } else {
-                            if let Some(cursor_range) = last_cursor.clone() {
-                                let mut start =
-                                    min(cursor_range.primary.index, cursor_range.secondary.index);
-                                let end =
-                                    max(cursor_range.primary.index, cursor_range.secondary.index);
-                                let extended = match end as isize + extend {
-                                    // Check for overflow or negative result
-                                    value if value < 0 => 0,
-                                    value => value as usize,
-                                };
-                                if start == end {
-                                    start = extended;
-                                }
-                                let cursor = Some(CCursorRange {
-                                    primary: CCursor::new(start.clone()),
-                                    secondary: CCursor::new(max(start.clone(), extended)),
-                                });
-                                output.state.set_ccursor_range(cursor.clone());
-                                output.state.store(ui.ctx(), output.response.id);
-                                *last_cursor = cursor.clone();
+                        } else if let Some(cursor_range) = *last_cursor {
+                            let mut start =
+                                min(cursor_range.primary.index, cursor_range.secondary.index);
+                            let end =
+                                max(cursor_range.primary.index, cursor_range.secondary.index);
+                            let extended = match end as isize + extend {
+                                // Check for overflow or negative result
+                                value if value < 0 => 0,
+                                value => value as usize,
+                            };
+                            if start == end {
+                                start = extended;
                             }
+                            let cursor = Some(CCursorRange {
+                                primary: CCursor::new(start),
+                                secondary: CCursor::new(max(start, extended)),
+                            });
+                            output.state.set_ccursor_range(cursor);
+                            output.state.store(ui.ctx(), output.response.id);
+                            *last_cursor = cursor;
                         }
 
                         if previous_text != text.clone() {
@@ -369,9 +367,9 @@ impl CodeEditor {
             let scroll_area = egui::ScrollArea::vertical()
                 .id_source(format!("{}_outer_scroll", self.id))
                 .stick_to_bottom(self.stick_to_bottom)
-                .vertical_scroll_offset(vertical_offset.clone())
+                .vertical_scroll_offset(*vertical_offset)
                 .show(ui, code_editor);
-            *vertical_offset = scroll_area.state.offset.y.clone();
+            *vertical_offset = scroll_area.state.offset.y;
         } else {
             code_editor(ui);
         }
@@ -386,14 +384,14 @@ impl CodeEditor {
         head: &str,
     ) -> (String, isize) {
         let mut substring = self
-            .get_selection_substring(text.clone(), cursor_range.clone())
+            .get_selection_substring(text.clone(), cursor_range)
             .clone();
         let mut new_text: String = "".into();
         let extend: isize;
 
         if substring[1].contains(head) {
             extend = -self.delta_char(substring[1].clone(), head);
-            substring[1] = substring[1].replace(&format!("\n{}", head), &"\n".to_string());
+            substring[1] = substring[1].replace(&format!("\n{}", head), "\n");
         } else {
             extend = self.delta_char(substring[1].clone(), head);
             substring[1] = substring[1].replace(&"\n".to_string(), &format!("\n{}", head));
@@ -402,7 +400,7 @@ impl CodeEditor {
         new_text.push_str(&substring[1].clone());
         new_text.push_str(&substring[2].clone());
 
-        return (new_text, extend);
+        (new_text, extend)
     }
 
     fn add_start_of_line(
@@ -412,7 +410,7 @@ impl CodeEditor {
         head: &str,
     ) -> (String, isize) {
         let mut substring = self
-            .get_selection_substring(text.clone(), cursor_range.clone())
+            .get_selection_substring(text.clone(), cursor_range)
             .clone();
         let mut new_text: String = "".into();
 
@@ -423,7 +421,7 @@ impl CodeEditor {
         new_text.push_str(&substring[1].clone());
         new_text.push_str(&substring[2].clone());
 
-        return (new_text, extend);
+        (new_text, extend)
     }
 
     fn remove_start_of_line(
@@ -433,18 +431,18 @@ impl CodeEditor {
         head: &str,
     ) -> (String, isize) {
         let mut substring = self
-            .get_selection_substring(text.clone(), cursor_range.clone())
+            .get_selection_substring(text.clone(), cursor_range)
             .clone();
         let mut new_text: String = "".into();
 
         let extend: isize = -self.delta_char(substring[1].clone(), head);
-        substring[1] = substring[1].replace(&format!("\n{}", head), &"\n".to_string());
+        substring[1] = substring[1].replace(&format!("\n{}", head), "\n");
 
         new_text.push_str(&substring[0].clone());
         new_text.push_str(&substring[1].clone());
         new_text.push_str(&substring[2].clone());
 
-        return (new_text, extend);
+        (new_text, extend)
     }
 
     fn get_selection_substring(&self, text: String, cursor_range: CCursorRange) -> Vec<String> {
@@ -459,11 +457,11 @@ impl CodeEditor {
 
         let last_char = end;
 
-        return vec![
+        vec![
             text.slice(..first_char).to_string(),
             text.slice(first_char..last_char).to_string(),
             text.slice(last_char..).to_string(),
-        ];
+        ]
     }
 
     fn delta_char(&self, text: String, modifier: &str) -> isize {
@@ -478,7 +476,7 @@ impl CodeEditor {
         let cursor = min(cursor_range.primary.index, cursor_range.secondary.index);
 
         if cursor < 2 {
-            return (text.clone().to_string(), 1 as isize);
+            return (text.clone().to_string(), 1_isize);
         }
 
         let mut last_line_break = cursor - 1;
@@ -492,15 +490,15 @@ impl CodeEditor {
             .collect::<Vec<_>>()
             .len();
 
-        let new_indent_depth = indent_depth.clone();
+        let new_indent_depth = indent_depth;
 
         let mut new_text: String = text.clone().slice(..(cursor + 1)).to_string();
-        new_text.push_str(&"\t".repeat(new_indent_depth.clone()));
+        new_text.push_str(&"\t".repeat(new_indent_depth));
         new_text.push_str(text.clone().slice((cursor + 1)..));
 
-        return (
+        (
             new_text.clone().to_string(),
             (new_indent_depth + 1) as isize,
-        );
+        )
     }
 }

@@ -29,10 +29,9 @@ impl Calcifer {
             .file_name()
             .expect("Could not get Tab Name")
             .to_string_lossy()
-            .to_string()
             == "untitled"
         {
-            return self.save_tab_as();
+            self.save_tab_as()
         } else {
             if let Err(err) = fs::write(
                 &self.tabs[self.selected_tab.to_index()].path,
@@ -41,7 +40,7 @@ impl Calcifer {
                 eprintln!("Error writing file: {}", err);
                 return None;
             }
-            return Some(self.tabs[self.selected_tab.to_index()].path.clone());
+            Some(self.tabs[self.selected_tab.to_index()].path.clone())
         }
     }
 
@@ -56,7 +55,7 @@ impl Calcifer {
             }
             return Some(path);
         }
-        return None;
+        None
     }
 
     pub fn handle_save_file(&mut self, path_option: Option<PathBuf>) {
@@ -82,7 +81,6 @@ impl Calcifer {
                 .file_name()
                 .expect("Could not get Tab Name")
                 .to_string_lossy()
-                .to_string()
                 != "untitled"
             {
                 new.open_file(Some(&path));
@@ -131,21 +129,19 @@ impl Calcifer {
         if let Some(name) = path.file_name() {
             if path.is_dir() {
                 egui::CollapsingHeader::new(name.to_string_lossy()).show(ui, |ui| {
-                    let mut paths: Vec<_> = fs::read_dir(&path)
+                    let mut paths: Vec<_> = fs::read_dir(path)
                         .expect("Failed to read dir")
                         .map(|r| r.unwrap())
                         .collect();
 
-                    paths.sort_by(|a, b| tools::sort_directories_first(a, b));
+                    paths.sort_by(tools::sort_directories_first);
 
                     for result in paths {
                         let _ = self.list_files(ui, &result.path());
                     }
                 });
-            } else {
-                if ui.button(name.to_string_lossy()).clicked() {
-                    self.open_file(Some(path));
-                }
+            } else if ui.button(name.to_string_lossy()).clicked() {
+                self.open_file(Some(path));
             }
         }
         Ok(())
@@ -171,7 +167,7 @@ impl Calcifer {
         let bg_color: Color32;
         let text_color: Color32;
 
-        if display.clone() {
+        if display {
             bg_color = Color32::from_hex(self.theme.functions)
                 .expect("Could not convert color to hex (functions)");
             text_color =
@@ -190,7 +186,7 @@ impl Calcifer {
         }
         ui.style_mut().visuals.override_text_color = None;
 
-        return display;
+        display
     }
 
     pub fn profiler(&self) -> String {
@@ -199,7 +195,7 @@ impl Calcifer {
         }
         let combined_string: Vec<String> = TIME_LABELS
             .into_iter()
-            .zip(self.time_watch.clone().into_iter())
+            .zip(self.time_watch.clone())
             .map(|(s, v)| format!("{} : {:.1} ms", s, v))
             .collect();
 
@@ -208,6 +204,6 @@ impl Calcifer {
             "	total : {:.1} ms",
             self.time_watch.clone().iter().sum::<f32>()
         ));
-        return result;
+        result
     }
 }

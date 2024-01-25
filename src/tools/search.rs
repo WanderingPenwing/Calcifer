@@ -73,13 +73,13 @@ impl Default for SearchWindow {
 
 impl SearchWindow {
     pub fn show(&mut self, ctx: &egui::Context, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
-        let mut visible = self.visible.clone();
+        let mut visible = self.visible;
         egui::Window::new("Search")
             .open(&mut visible) //I want it to be able to change its visibility (if user close manually)
             .vscroll(true)
             .hscroll(true)
             .show(ctx, |ui| self.ui(ui, tabs, selected_tab)); //but I want to edit the rest of the parameters and maybe close automatically
-        self.visible = self.visible.clone() && visible;
+        self.visible = self.visible && visible;
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
@@ -115,8 +115,8 @@ impl SearchWindow {
             }
 
             if self.search_text == self.searched_text
-                && self.search_text.len() > 0
-                && self.results.len() == 0
+                && !self.search_text.is_empty()
+                && self.results.is_empty()
             {
                 ui.colored_label(RED, " 0/0 ");
             } else {
@@ -132,7 +132,7 @@ impl SearchWindow {
             }
         });
 
-        let previous_bool_state = self.across_documents.clone();
+        let previous_bool_state = self.across_documents;
         ui.checkbox(&mut self.across_documents, "Across documents");
         if previous_bool_state != self.across_documents {
             self.searched_text = "".into();
@@ -164,15 +164,15 @@ impl SearchWindow {
     }
 
     pub fn get_cursor_start(&self) -> usize {
-        self.results[self.current_result].start.clone()
+        self.results[self.current_result].start
     }
 
     pub fn get_cursor_end(&self) -> usize {
-        self.results[self.current_result].end.clone()
+        self.results[self.current_result].end
     }
 
     fn search(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
-        if self.search_text.len() == 0 {
+        if self.search_text.is_empty() {
             return;
         }
 
@@ -194,7 +194,7 @@ impl SearchWindow {
         self.results = search_results.clone();
 
         self.current_result = 0;
-        if self.results.len() > 0 {
+        if !self.results.is_empty() {
             self.find_result(tabs, selected_tab, 0);
         }
     }
@@ -215,7 +215,7 @@ impl SearchWindow {
     fn find_result(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber, direction: i32) {
         if self.searched_text != self.search_text {
             self.search(tabs, &mut *selected_tab);
-        } else if self.results.len() > 0 {
+        } else if !self.results.is_empty() {
             self.current_result =
                 (self.current_result as i32 + direction + self.results.len() as i32) as usize
                     % self.results.len();

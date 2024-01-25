@@ -18,13 +18,13 @@ impl ConfirmWindow {
     }
 
     pub fn show(&mut self, ctx: &egui::Context) {
-        let mut visible = self.visible.clone();
+        let mut visible = self.visible;
         egui::Window::new(self.id.clone())
             .open(&mut visible)
             .vscroll(true)
             .hscroll(true)
             .show(ctx, |ui| self.ui(ui));
-        self.visible = self.visible.clone() && visible;
+        self.visible = self.visible && visible;
     }
 
     fn ui(&mut self, ui: &mut egui::Ui) {

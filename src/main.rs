@@ -182,8 +182,8 @@ impl eframe::App for Calcifer {
         }
 
         if ctx.input(|i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {
-            self.search_menu.visible = !self.search_menu.visible.clone();
-            self.search_menu.initialized = !self.search_menu.visible.clone();
+            self.search_menu.visible = !self.search_menu.visible;
+            self.search_menu.initialized = !self.search_menu.visible;
         }
 
         if ctx.input(|i| i.viewport().close_requested()) {
@@ -193,7 +193,7 @@ impl eframe::App for Calcifer {
                     unsaved_tabs.push(index);
                 }
             }
-            if unsaved_tabs.len() > 0 {
+            if !unsaved_tabs.is_empty() {
                 let mut unsaved_tabs_names: String = "".to_string();
                 for index in unsaved_tabs.iter() {
                     unsaved_tabs_names.push_str(&self.tabs[*index].get_name());

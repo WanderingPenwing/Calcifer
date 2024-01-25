@@ -51,7 +51,7 @@ impl Default for Tab {
 impl Tab {
     pub fn new(path: PathBuf) -> Self {
         Self {
-            path: path.clone().into(),
+            path: path.clone(),
             code: read_to_string(path.clone())
                 .expect("Not able to read the file")
                 .replace(&" ".repeat(4), "\t"),

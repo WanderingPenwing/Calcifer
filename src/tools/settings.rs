@@ -18,13 +18,13 @@ impl SettingsWindow {
     }
 
     pub fn show(&mut self, ctx: &egui::Context) {
-        let mut visible = self.visible.clone();
+        let mut visible = self.visible;
         egui::Window::new("Settings")
             .open(&mut visible) //I want it to be able to change its visibility (if user close manually)
             .vscroll(true)
             .hscroll(true)
             .show(ctx, |ui| self.ui(ui)); //but I want to edit the rest of the parameters and maybe close automatically
-        self.visible = self.visible.clone() && visible;
+        self.visible = self.visible && visible;
     }
 
     fn ui(&mut self, ui: &mut egui::Ui) {
@@ -32,9 +32,9 @@ impl SettingsWindow {
         ui.horizontal(|ui| {
             ui.label("Theme ");
 
-            let previous_theme = self.theme.clone();
+            let previous_theme = self.theme;
             egui::ComboBox::from_label("")
-                .selected_text(format!("{}", self.theme.name))
+                .selected_text(self.theme.name.to_string())
                 .show_ui(ui, |ui| {
                     ui.style_mut().wrap = Some(false);
                     ui.set_min_width(60.0);

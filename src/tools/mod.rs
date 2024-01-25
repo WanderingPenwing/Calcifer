@@ -134,7 +134,7 @@ pub fn version() -> String {
             }
         }
     }
-    return "".to_string();
+    "".to_string()
 }
 
 #[cfg(test)]

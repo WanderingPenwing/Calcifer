@@ -69,7 +69,7 @@ impl Calcifer {
             return;
         }
         egui::TopBottomPanel::bottom("terminal")
-            .default_height(super::TERMINAL_HEIGHT.clone())
+            .default_height(super::TERMINAL_HEIGHT)
             .height_range(Rangef::new(
                 super::TERMINAL_RANGE.start,
                 super::TERMINAL_RANGE.end,
@@ -93,7 +93,7 @@ impl Calcifer {
                         ui.style_mut().visuals.extreme_bg_color = bg_color;
                         let Self { command, .. } = self;
                         ui.colored_label(
-                            command_color.clone(),
+                            command_color,
                             tools::format_path(
                                 &env::current_dir().expect("Could not find Shell Environnment"),
                             ),
@@ -126,11 +126,11 @@ impl Calcifer {
                                             format!("\n{} {}", entry.env, entry.command),
                                         );
                                         ui.end_row();
-                                        if entry.output != "" {
+                                        if !entry.output.is_empty() {
                                             ui.colored_label(entry_color, &entry.output);
                                             ui.end_row();
                                         }
-                                        if entry.error != "" {
+                                        if !entry.error.is_empty() {
                                             ui.colored_label(super::RED, &entry.error);
                                             ui.end_row();
                                         }
@@ -277,7 +277,7 @@ impl Calcifer {
             self.settings_menu.show(ctx);
         }
         if self.settings_menu.updated {
-            self.theme = self.settings_menu.theme.clone();
+            self.theme = self.settings_menu.theme;
         }
 
         self.handle_confirm();

@@ -64,7 +64,7 @@ pub fn send_command(command: String) -> CommandEntry {
         return entry;
     }
 
-    let path_append = command[3..].replace("~", "/home/penwing");
+    let path_append = command[3..].replace('~', "/home/penwing");
     let path = Path::new(&path_append);
 
     if format!("{}", path.display()) == "/" {
@@ -76,12 +76,12 @@ pub fn send_command(command: String) -> CommandEntry {
     if env::set_current_dir(path).is_ok() {
         let mut entry = CommandEntry::new(format!("echo Moved to : {}", path.display()));
         entry.command = command;
-        return entry;
+        entry
     } else {
         let mut entry =
             CommandEntry::new(format!("echo Could not find path : {} >&2", path.display()));
         entry.command = command;
-        return entry;
+        entry
     }
 }
 
@@ -110,5 +110,5 @@ pub fn execute(
     fcntl(stderr_fd, FcntlArg::F_SETFL(OFlag::O_NONBLOCK))
         .expect("Failed to set non-blocking mode");
 
-    return (BufReader::new(stdout), BufReader::new(stderr));
+    (BufReader::new(stdout), BufReader::new(stderr))
 }
