@@ -80,8 +80,9 @@ struct Calcifer {
 	close_tab_confirm: tools::confirm::ConfirmWindow,
 	tab_to_close: usize,
 	refresh_confirm: tools::confirm::ConfirmWindow,
+	exit_confirm: tools::confirm::ConfirmWindow,
 	
-	search: tools::search::SearchWindow,
+	search_menu: tools::search::SearchWindow,
 	settings_menu: tools::settings::SettingsWindow,
 	shortcuts_menu: tools::shortcuts::ShortcutsWindow,
 	
@@ -109,8 +110,9 @@ impl Default for Calcifer {
 			close_tab_confirm: tools::confirm::ConfirmWindow::new("You have some unsaved changes, Do you still want to close this document ?", "Confirm Close"),
 			tab_to_close: 0,
 			refresh_confirm: tools::confirm::ConfirmWindow::new("You have some unsaved changes, Do you still want to refresh this document ?", "Confirm Refresh"),
+			exit_confirm: tools::confirm::ConfirmWindow::new("", "Confirm Exit"),
 			
-			search: tools::search::SearchWindow::default(),
+			search_menu: tools::search::SearchWindow::default(),
 			settings_menu: tools::settings::SettingsWindow::new(DEFAULT_THEMES[0]),
 			shortcuts_menu: tools::shortcuts::ShortcutsWindow::new(),
 			
@@ -172,8 +174,26 @@ impl eframe::App for Calcifer {
 		}
 
 		if ctx.input( |i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {
-			self.search.visible = !self.search.visible.clone();
-			self.search.initialized = !self.search.visible.clone();
+			self.search_menu.visible = !self.search_menu.visible.clone();
+			self.search_menu.initialized = !self.search_menu.visible.clone();
+		}
+		
+		if ctx.input(|i| i.viewport().close_requested()) {
+			let mut unsaved_tabs : Vec<usize> = vec![];
+			for (index, tab) in self.tabs.iter().enumerate() {
+				if !tab.saved {
+					unsaved_tabs.push(index);
+				}
+			}
+			if unsaved_tabs.len() > 0 {
+				let mut unsaved_tabs_names : String = "".to_string();
+				for index in unsaved_tabs.iter() {
+					unsaved_tabs_names.push_str(&self.tabs[*index].get_name());
+				}
+				egui::Context::send_viewport_cmd(ctx, egui::ViewportCommand::CancelClose);
+				self.exit_confirm.prompt = format!("You have some unsaved changes :\n{}\nDo you still want to exit ?", unsaved_tabs_names);
+				self.exit_confirm.ask();
+			}
 		}
 		
 		self.time_watch[0] = watch.elapsed().as_micros() as f32 / 1000.0;

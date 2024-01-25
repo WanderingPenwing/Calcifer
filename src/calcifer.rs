@@ -30,11 +30,13 @@ impl Calcifer {
 					ui.separator();
 					self.terminal_visible = self.toggle(ui, self.terminal_visible, "🖵");
 					ui.separator();
+					self.search_menu.visible = self.toggle(ui, self.search_menu.visible, "🔍");
+					ui.separator();
 					self.settings_menu.visible = self.toggle(ui, self.settings_menu.visible, "⚙");
 					ui.separator();
 					self.shortcuts_menu.visible = self.toggle(ui, self.shortcuts_menu.visible, "⌨");
 					ui.separator();
-					self.profiler_visible = self.toggle(ui, self.profiler_visible, "🗠");
+					self.profiler_visible = self.toggle(ui, self.profiler_visible, "⚡");
 				});
 			});
 	}
@@ -79,6 +81,9 @@ impl Calcifer {
 					ui.label("");
 					
 					ui.horizontal(|ui| {
+						if ui.add(egui::Button::new("⟳")).clicked() {
+							self.command_history = vec![];
+						}
 						ui.style_mut().visuals.extreme_bg_color = bg_color;
 						let Self { command, .. } = self;
 						ui.colored_label(command_color.clone(), tools::format_path(&env::current_dir().expect("Could not find Shell Environnment")));
@@ -182,12 +187,12 @@ impl Calcifer {
 		let lines = current_tab.code.chars().filter(|&c| c == '\n').count() + 1;
 		let mut override_cursor : Option<CCursorRange> = None;
 
-		if !self.search.result_selected {
+		if !self.search_menu.result_selected {
 			override_cursor = Some(CCursorRange::two(
-							CCursor::new(self.search.get_cursor_start()),
-							CCursor::new(self.search.get_cursor_end()),
+							CCursor::new(self.search_menu.get_cursor_start()),
+							CCursor::new(self.search_menu.get_cursor_end()),
 						));
-			self.search.result_selected = true;
+			self.search_menu.result_selected = true;
 		}
 		
 		CodeEditor::default().id_source("code editor")
@@ -200,14 +205,23 @@ impl Calcifer {
 	}
 	
 	pub fn draw_windows(&mut self, ctx: &egui::Context) {
-		if self.search.visible {
-			self.search.show(ctx, &mut self.tabs, &mut self.selected_tab);
+		if self.search_menu.visible {
+			self.search_menu.show(ctx, &mut self.tabs, &mut self.selected_tab);
 		}
 		if self.close_tab_confirm.visible {
 			self.close_tab_confirm.show(ctx);
 		}
 		if self.refresh_confirm.visible {
 			self.refresh_confirm.show(ctx);
+		}
+		if self.exit_confirm.visible {
+			self.exit_confirm.show(ctx);
+		}
+		if self.exit_confirm.proceed {
+			for tab in self.tabs.iter_mut() {
+				tab.saved = true;
+			}
+			egui::Context::send_viewport_cmd(ctx, egui::ViewportCommand::Close);
 		}
 		if self.shortcuts_menu.visible {
 			self.shortcuts_menu.show(ctx);

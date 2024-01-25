@@ -4,7 +4,7 @@ use eframe::egui;
 pub struct ConfirmWindow {
 	pub visible: bool,
 	pub proceed: bool,
-	prompt: String,
+	pub prompt: String,
 	id: String,
 }
 
