@@ -18,7 +18,7 @@ mod build {
 
 #[cfg(not(debug_assertions))]
 mod build {
-	pub const SAVE_PATH : &str = "/home/penwing/Documents/calcifer_save.json";
+	pub const SAVE_PATH : &str = "/home/penwing/Documents/.save/calcifer_save.json";
 	pub const TITLE: &str = "";
 }
 
