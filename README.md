@@ -35,6 +35,6 @@ Max tabs 8 => 20
 Max framerate => 30 fps (less cpu usage)
 
 # 1.1.0 :
-Added close tab and refresh confirm prompt
+Added confirm prompt if unsaved 
 Async terminal !
 Better Ui
