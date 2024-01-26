@@ -56,8 +56,6 @@ impl Tab {
 			.extension()
 			.and_then(|ext| ext.to_str())
 			.unwrap_or_default();
-			
-		println!("language : {}", extension);
 
 		Self {
 			path: file_path.clone(),
