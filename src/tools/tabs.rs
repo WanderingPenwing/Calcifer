@@ -1,5 +1,5 @@
 use eframe::egui::text_edit::CCursorRange;
-use std::{fs::read_to_string, path::PathBuf};
+use std::{fs::read_to_string, path::Path, path::PathBuf};
 
 use crate::MAX_TABS;
 
@@ -85,16 +85,16 @@ impl Tab {
     }
 }
 
-fn read_file_contents(path: &PathBuf) -> String {
-    read_to_string(path.clone())
+fn read_file_contents(path: &Path) -> String {
+    read_to_string(path.to_path_buf())
         .map_err(|err| format!("// Error reading file: {}", err))
         .unwrap_or_else(|err_msg| err_msg)
 }
 
-fn format_file_path(path: &PathBuf, contents: &str) -> PathBuf {
+fn format_file_path(path: &Path, contents: &str) -> PathBuf {
     if contents.contains("Error reading file") {
         "untitled".into()
     } else {
-        path.clone()
+        path.to_path_buf()
     }
 }
