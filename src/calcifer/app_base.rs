@@ -126,24 +126,55 @@ impl Calcifer {
     }
 
     pub fn list_files(&mut self, ui: &mut egui::Ui, path: &Path) -> io::Result<()> {
-        if let Some(name) = path.file_name() {
-            if path.is_dir() {
-                egui::CollapsingHeader::new(name.to_string_lossy()).show(ui, |ui| {
-                    let mut paths: Vec<_> = fs::read_dir(path)
-                        .expect("Failed to read dir")
-                        .map(|r| r.unwrap())
-                        .collect();
+        if path.file_name().is_none() {
+            return Ok(());
+        }
 
-                    paths.sort_by(tools::sort_directories_first);
+        let name = path
+            .file_name()
+            .unwrap_or_else(|| OsStr::new(""))
+            .to_string_lossy();
 
-                    for result in paths {
-                        let _ = self.list_files(ui, &result.path());
-                    }
-                });
-            } else if ui.button(name.to_string_lossy()).clicked() {
+        if !path.is_dir() {
+            if ui.button(name.to_string_lossy()).clicked() {
                 self.open_file(Some(path));
             }
+            return Ok(());
         }
+
+        egui::CollapsingHeader::new(name.to_string_lossy()).show(ui, |ui| {
+            match fs::read_dir(path) {
+                Err(err) => {
+                    ui.label(format!("Error reading directory: {}", err));
+                    return;
+                }
+                Ok(entries) => {
+                    let mut paths: Vec<Result<fs::DirEntry, io::Error>> = entries
+                        .map(|r| r.map_err(|e| io::Error::new(io::ErrorKind::Other, e)))
+                        .collect();
+
+                    paths.sort_by(|a, b| match (a, b) {
+                        (Ok(entry_a), Ok(entry_b)) => {
+                            tools::sort_directories_first(&entry_a, &entry_b)
+                        }
+                        (Err(_), Ok(_)) => std::cmp::Ordering::Greater,
+                        (Ok(_), Err(_)) => std::cmp::Ordering::Less,
+                        (Err(_), Err(_)) => std::cmp::Ordering::Equal,
+                    });
+
+                    for result in paths {
+                        match result {
+                            Ok(entry) => {
+                                let _ = self.list_files(ui, &entry.path());
+                            }
+                            Err(err) => {
+                                ui.label(format!("Error processing directory entry: {}", err));
+                            }
+                        }
+                    }
+                }
+            }
+        });
         Ok(())
     }
 
