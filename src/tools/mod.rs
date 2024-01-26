@@ -6,7 +6,6 @@ use std::{
     cmp::Ordering, ffi::OsStr, fs, fs::read_to_string, fs::OpenOptions, io::Write, path::Component,
     path::Path, path::PathBuf,
 };
-use toml::Value;
 
 //my tools;
 pub mod confirm;
@@ -113,28 +112,6 @@ pub fn format_path(path: &Path) -> String {
             .collect::<Vec<_>>()
             .join("/")
     )
-}
-
-pub fn version() -> String {
-    // Read the contents of the Cargo.toml file
-    if !Path::new("Cargo.toml").exists() {
-        return "".to_string();
-    }
-    let toml_content = fs::read_to_string("Cargo.toml").expect("Failed to read Cargo.toml");
-
-    // Parse the TOML content
-    let toml: Value = toml::from_str(&toml_content).expect("Failed to parse TOML");
-
-    // Extract version information
-    if let Some(package) = toml.get("package") {
-        if let Some(version) = package.get("version") {
-            if let Some(version_string) = version.as_str() {
-                println!("Version: {}", version_string);
-                return format!(" v{}", version_string);
-            }
-        }
-    }
-    "".to_string()
 }
 
 #[cfg(test)]

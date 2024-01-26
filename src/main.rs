@@ -56,7 +56,7 @@ fn main() -> Result<(), eframe::Error> {
     };
 
     eframe::run_native(
-        &format!("Calcifer{}{}", tools::version(), TITLE),
+        &format!("Calcifer{}", TITLE),
         options,
         Box::new(move |_cc| Box::from(Calcifer::from_app_state(app_state))),
     )

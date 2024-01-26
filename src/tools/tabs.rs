@@ -50,17 +50,23 @@ impl Default for Tab {
 
 impl Tab {
     pub fn new(path: PathBuf) -> Self {
+        let text = read_file_contents(&path).replace(&" ".repeat(4), "\t");
+        let file_path = format_file_path(&path, &text);
+        let extension = file_path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .unwrap_or_default();
+
         Self {
-            path: path.clone(),
-            code: read_to_string(path.clone())
-                .expect("Not able to read the file")
-                .replace(&" ".repeat(4), "\t"),
-            language: path.to_str().unwrap().split('.').last().unwrap().into(),
+            path: file_path.clone(),
+            code: text,
+            language: extension.into(),
             saved: true,
             scroll_offset: 0.0,
             last_cursor: None,
         }
     }
+
     pub fn get_name(&self) -> String {
         self.path
             .file_name()
@@ -70,10 +76,25 @@ impl Tab {
     }
 
     pub fn refresh(&mut self) {
-        self.code = read_to_string(self.path.clone())
-            .expect("Not able to read the file")
-            .replace(&" ".repeat(4), "\t");
+        let text = read_file_contents(&self.path).replace(&" ".repeat(4), "\t");
+        let file_path = format_file_path(&self.path, &text);
+
+        self.code = text;
+        self.path = file_path;
         self.saved = true;
-        println!("refreshed {}", self.path.display());
+    }
+}
+
+fn read_file_contents(path: &PathBuf) -> String {
+    read_to_string(path.clone())
+        .map_err(|err| format!("// Error reading file: {}", err))
+        .unwrap_or_else(|err_msg| err_msg)
+}
+
+fn format_file_path(path: &PathBuf, contents: &str) -> PathBuf {
+    if contents.contains("Error reading file") {
+        "untitled".into()
+    } else {
+        path.clone()
     }
 }
