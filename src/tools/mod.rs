@@ -21,19 +21,10 @@ pub use terminal::*;
 pub mod tabs;
 pub use tabs::*;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Default)]
 pub struct AppState {
     pub tabs: Vec<PathBuf>,
     pub theme: usize,
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        Self {
-            tabs: vec![],
-            theme: 0,
-        }
-    }
 }
 
 pub fn save_state(state: &AppState, file_path: &str) -> Result<(), std::io::Error> {
