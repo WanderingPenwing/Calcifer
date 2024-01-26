@@ -70,9 +70,9 @@ impl Tab {
     pub fn get_name(&self) -> String {
         self.path
             .file_name()
-            .expect("Could not get Tab Name")
-            .to_string_lossy()
-            .to_string()
+            .map_or("untitled".to_string(), |name| {
+                name.to_string_lossy().to_string()
+            })
     }
 
     pub fn refresh(&mut self) {

@@ -37,7 +37,8 @@ const DISPLAY_PATH_DEPTH: usize = 3;
 const MAX_TABS: usize = 20;
 
 fn main() -> Result<(), eframe::Error> {
-    let icon_data = tools::load_icon();
+    let icon_data = tools::load_icon().unwrap_or_default();
+
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1200.0, 800.0])
@@ -47,12 +48,12 @@ fn main() -> Result<(), eframe::Error> {
 
     // Attempt to load previous state
     let app_state: tools::AppState = if Path::new(SAVE_PATH).exists() {
-        tools::load_state(SAVE_PATH).expect("Failed to load the save")
-    } else {
-        tools::AppState {
-            tabs: vec![],
-            theme: 0,
+        match tools::load_state(SAVE_PATH) {
+            Ok(app_state) => app_state,
+            Err(_) => tools::AppState::default(),
         }
+    } else {
+        tools::AppState::default()
     };
 
     eframe::run_native(

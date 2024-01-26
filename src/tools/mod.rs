@@ -1,10 +1,12 @@
 use crate::calcifer::code_editor::Syntax;
 use crate::DISPLAY_PATH_DEPTH;
 use eframe::egui;
+use egui::Color32;
+use image::GenericImageView;
 use serde::{Deserialize, Serialize};
 use std::{
-    cmp::Ordering, ffi::OsStr, fs, fs::read_to_string, fs::OpenOptions, io::Write, path::Component,
-    path::Path, path::PathBuf,
+    cmp::Ordering, error::Error, ffi::OsStr, fs, fs::read_to_string, fs::OpenOptions, io::Write,
+    path::Component, path::Path, path::PathBuf,
 };
 
 //my tools;
@@ -23,6 +25,15 @@ pub use tabs::*;
 pub struct AppState {
     pub tabs: Vec<PathBuf>,
     pub theme: usize,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self {
+            tabs: vec![],
+            theme: 0,
+        }
+    }
 }
 
 pub fn save_state(state: &AppState, file_path: &str) -> Result<(), std::io::Error> {
@@ -51,22 +62,20 @@ pub fn load_state(file_path: &str) -> Result<AppState, std::io::Error> {
     Ok(serde_json::from_str(&serialized_state)?)
 }
 
-pub fn load_icon() -> egui::IconData {
+pub fn load_icon() -> Result<egui::IconData, Box<dyn Error>> {
     let (icon_rgba, icon_width, icon_height) = {
         let icon = include_bytes!("../../assets/icon.png");
-        let image = image::load_from_memory(icon)
-            .expect("Failed to open icon path")
-            .into_rgba8();
+        let image = image::load_from_memory(icon)?;
+        let rgba = image.clone().into_rgba8().to_vec();
         let (width, height) = image.dimensions();
-        let rgba = image.into_raw();
         (rgba, width, height)
     };
 
-    egui::IconData {
+    Ok(egui::IconData {
         rgba: icon_rgba,
         width: icon_width,
         height: icon_height,
-    }
+    })
 }
 
 pub fn to_syntax(language: &str) -> Syntax {
@@ -112,6 +121,10 @@ pub fn format_path(path: &Path) -> String {
             .collect::<Vec<_>>()
             .join("/")
     )
+}
+
+pub fn hex_str_to_color(hex_str: &str) -> Color32 {
+    Color32::from_hex(hex_str).unwrap_or_else(|_| Color32::BLACK)
 }
 
 #[cfg(test)]

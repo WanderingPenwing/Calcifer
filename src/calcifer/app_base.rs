@@ -9,6 +9,7 @@ use crate::MAX_TABS;
 use crate::PATH_ROOT;
 use crate::SAVE_PATH;
 use crate::TIME_LABELS;
+use tools::hex_str_to_color;
 
 impl Calcifer {
     pub fn handle_confirm(&mut self) {
@@ -27,9 +28,7 @@ impl Calcifer {
         if self.tabs[self.selected_tab.to_index()]
             .path
             .file_name()
-            .expect("Could not get Tab Name")
-            .to_string_lossy()
-            == "untitled"
+            .map_or(true, |name| name.to_string_lossy() == "untitled")
         {
             self.save_tab_as()
         } else {
@@ -77,11 +76,9 @@ impl Calcifer {
         };
 
         for path in app_state.tabs {
-            if path
+            if !path
                 .file_name()
-                .expect("Could not get Tab Name")
-                .to_string_lossy()
-                != "untitled"
+                .map_or(true, |name| name.to_string_lossy() == "untitled")
             {
                 new.open_file(Some(&path));
             }
@@ -195,15 +192,11 @@ impl Calcifer {
         let text_color: Color32;
 
         if display {
-            bg_color = Color32::from_hex(self.theme.functions)
-                .expect("Could not convert color to hex (functions)");
-            text_color =
-                Color32::from_hex(self.theme.bg).expect("Could not convert color to hex (bg)");
+            bg_color = hex_str_to_color(self.theme.functions);
+            text_color = hex_str_to_color(self.theme.bg);
         } else {
-            bg_color =
-                Color32::from_hex(self.theme.bg).expect("Could not convert color to hex (bg)");
-            text_color = Color32::from_hex(self.theme.literals)
-                .expect("Could not convert color to hex (literals)");
+            bg_color = hex_str_to_color(self.theme.bg);
+            text_color = hex_str_to_color(self.theme.literals);
         };
 
         ui.style_mut().visuals.override_text_color = Some(text_color);

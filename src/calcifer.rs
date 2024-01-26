@@ -1,11 +1,12 @@
 use eframe::egui;
 use egui::{text::CCursor, text_edit::CCursorRange, Rangef};
-use std::{cmp::max, env, path::Path};
+use std::{cmp::max, env, path::Path, path::PathBuf};
 
 use crate::tools;
 use crate::Calcifer;
 use crate::MAX_TABS;
 use crate::PATH_ROOT;
+use tools::hex_str_to_color;
 
 pub mod code_editor;
 use code_editor::CodeEditor;
@@ -77,12 +78,9 @@ impl Calcifer {
             .resizable(true)
             .show(ctx, |ui| {
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                    let command_color = egui::Color32::from_hex(self.theme.functions)
-                        .expect("Theme color issue (functions)");
-                    let entry_color = egui::Color32::from_hex(self.theme.literals)
-                        .expect("Theme color issue (literals)");
-                    let bg_color =
-                        egui::Color32::from_hex(self.theme.bg).expect("Theme color issue (bg)");
+                    let command_color = hex_str_to_color(self.theme.functions);
+                    let entry_color = hex_str_to_color(self.theme.literals);
+                    let bg_color = hex_str_to_color(self.theme.bg);
 
                     ui.label("");
 
@@ -95,7 +93,7 @@ impl Calcifer {
                         ui.colored_label(
                             command_color,
                             tools::format_path(
-                                &env::current_dir().expect("Could not find Shell Environnment"),
+                                &env::current_dir().unwrap_or_else(|_| PathBuf::from("/")),
                             ),
                         );
                         let response = ui.add(
@@ -148,21 +146,16 @@ impl Calcifer {
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.style_mut().visuals.selection.bg_fill =
-                        egui::Color32::from_hex(self.theme.functions)
-                            .expect("Could not convert color");
-                    ui.style_mut().visuals.hyperlink_color =
-                        egui::Color32::from_hex(self.theme.functions)
-                            .expect("Could not convert color");
+                        hex_str_to_color(self.theme.functions);
+                    ui.style_mut().visuals.hyperlink_color = hex_str_to_color(self.theme.functions);
                     for (index, tab) in self.tabs.clone().iter().enumerate() {
                         let mut title = tab.get_name();
                         if !tab.saved {
                             title += " ~";
                         }
                         if self.selected_tab == tools::TabNumber::from_index(index) {
-                            ui.style_mut().visuals.override_text_color = Some(
-                                egui::Color32::from_hex(self.theme.bg)
-                                    .expect("Could not convert color"),
-                            );
+                            ui.style_mut().visuals.override_text_color =
+                                Some(hex_str_to_color(self.theme.bg));
                         }
                         ui.selectable_value(
                             &mut self.selected_tab,
