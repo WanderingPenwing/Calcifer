@@ -18,10 +18,12 @@ pub mod file_tree;
 
 #[cfg(target_os = "linux")]
 pub mod terminal;
+#[cfg(target_os = "linux")]
 pub use terminal::*;
 
 #[cfg(target_os = "windows")]
 pub mod windows_terminal;
+#[cfg(target_os = "windows")]
 pub use windows_terminal::*;
 
 pub mod tabs;

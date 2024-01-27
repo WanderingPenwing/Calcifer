@@ -31,7 +31,7 @@ impl CommandEntry {
 		CommandEntry {
 			env,
 			command,
-			result: vec![Line::error("General Kenobi")],
+			result: vec![Line::error("General Kenobi".to_string())],
 		}
 	}
 
@@ -41,7 +41,7 @@ impl CommandEntry {
 }
 
 pub fn send_command(command: String) -> CommandEntry {
-	return CommandEntry::new("windows>", "hello there");
+	return CommandEntry::new("windows>".to_string(), "hello there".to_string());
 }
 
 
