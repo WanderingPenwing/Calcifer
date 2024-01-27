@@ -2,7 +2,6 @@ use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-//use eframe::egui;
 
 use crate::tools;
 use crate::ALLOWED_FILE_EXTENSIONS;
@@ -21,15 +20,6 @@ impl File {
 		Self {
 			name,
 			path,
-			folder_content: None,
-			folder_open: false,
-		}
-	}
-	
-	pub fn empty() -> Self {
-		Self {
-			name: "No file found".into(),
-			path: Path::new("/").to_path_buf(),
 			folder_content: None,
 			folder_open: false,
 		}
