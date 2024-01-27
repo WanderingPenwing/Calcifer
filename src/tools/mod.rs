@@ -28,10 +28,10 @@ pub struct AppState {
 	pub theme: usize,
 }
 
-pub fn save_state(state: &AppState, file_path: &str) -> Result<(), std::io::Error> {
+pub fn save_state(state: &AppState, file_path: &Path) -> Result<(), std::io::Error> {
 	let serialized_state = serde_json::to_string(state)?;
 
-	if let Some(parent_dir) = Path::new(file_path).parent() {
+	if let Some(parent_dir) = file_path.parent() {
 		fs::create_dir_all(parent_dir)?;
 	}
 
@@ -43,12 +43,12 @@ pub fn save_state(state: &AppState, file_path: &str) -> Result<(), std::io::Erro
 
 	file.write_all(serialized_state.as_bytes())?;
 
-	println!("Saved state at {}", file_path);
+	println!("Saved state at {}", file_path.display());
 
 	Ok(())
 }
 
-pub fn load_state(file_path: &str) -> Result<AppState, std::io::Error> {
+pub fn load_state(file_path: &Path) -> Result<AppState, std::io::Error> {
 	let serialized_state = read_to_string(file_path)?;
 
 	Ok(serde_json::from_str(&serialized_state)?)
