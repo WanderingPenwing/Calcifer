@@ -16,8 +16,13 @@ pub mod settings;
 pub mod shortcuts;
 pub mod file_tree;
 
+#[cfg(target_os = "linux")]
 pub mod terminal;
 pub use terminal::*;
+
+#[cfg(target_os = "windows")]
+pub mod windows_terminal;
+pub use windows_terminal::*;
 
 pub mod tabs;
 pub use tabs::*;
