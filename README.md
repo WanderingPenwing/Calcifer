@@ -45,3 +45,4 @@ Async terminal !
 Real Ui  
 
 # 1.1.0 :
+Better error handling

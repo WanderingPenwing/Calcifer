@@ -4,7 +4,7 @@ use nix::fcntl::FcntlArg;
 use nix::fcntl::OFlag;
 use std::io::BufRead;
 use std::io::BufReader;
-use std::io::Read;
+//use std::io::Read;
 use std::os::fd::AsRawFd;
 use std::process::Stdio;
 use std::{env, path::Path, path::PathBuf, process::Command};
@@ -14,44 +14,62 @@ pub struct Buffer {
     pub error_buffer: BufReader<std::process::ChildStderr>,
 }
 
+pub struct Line {
+    pub text: String,
+    pub error: bool,
+}
+
+impl Line {
+    fn output(text: String) -> Self {
+        Self {
+            text: remove_line_break(text),
+            error: false,
+        }
+    }
+    fn error(text: String) -> Self {
+        Self {
+            text: remove_line_break(text),
+            error: true,
+        }
+    }
+}
+
 pub struct CommandEntry {
     pub env: String,
     pub command: String,
-    pub output: String,
-    pub error: String,
+    pub result: Vec<Line>,
     pub buffer: Option<Buffer>,
 }
 
 impl CommandEntry {
     pub fn new(env: String, command: String) -> Self {
-        let (buffer, error) = match execute(command.clone()) {
-            Ok(command_buffer) => (Some(command_buffer), String::new()),
-            Err(err) => (None, format!("failed to get results: {}", err)),
+        let (buffer, result) = match execute(command.clone()) {
+            Ok(command_buffer) => (Some(command_buffer), vec![]),
+            Err(err) => (
+                None,
+                vec![Line::error(format!("failed to get results: {}", err))],
+            ),
         };
 
         CommandEntry {
             env,
             command,
-            output: String::new(),
-            error,
+            result,
             buffer,
         }
     }
 
     pub fn update(&mut self) {
         if let Some(buffer) = &mut self.buffer {
-            for line in buffer.output_buffer.by_ref().lines() {
-                match line {
-                    Ok(line) => self.output += &format!("{}\n", line),
-                    Err(_) => return,
-                }
+            let mut output = String::new();
+            let _ = buffer.output_buffer.read_line(&mut output);
+            if !remove_line_break(output.to_string()).is_empty() {
+                self.result.push(Line::output(format!("{}\n", output)));
             }
-
-            for line in buffer.error_buffer.by_ref().lines() {
-                match line {
-                    Ok(line) => self.error += &format!("{}\n", line),
-                    Err(_) => return,
-                }
+            let mut error = String::new();
+            let _ = buffer.error_buffer.read_line(&mut error);
+            if !remove_line_break(error.to_string()).is_empty() {
+                self.result.push(Line::error(format!("{}\n", error)));
             }
         }
     }
@@ -128,4 +146,15 @@ pub fn execute(command: String) -> Result<Buffer, std::io::Error> {
         output_buffer,
         error_buffer,
     })
+}
+
+fn remove_line_break(input: String) -> String {
+    let mut text = input.clone();
+    while text.ends_with('\n') {
+        text.pop();
+        if text.ends_with('\r') {
+            text.pop();
+        }
+    }
+    text
 }
