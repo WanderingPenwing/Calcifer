@@ -2,14 +2,14 @@ use eframe::egui;
 use egui::Color32;
 use std::{cmp::min, fs, path::Path, path::PathBuf};
 
+use crate::save_path;
 use crate::tools;
 use crate::Calcifer;
 use crate::DEFAULT_THEMES;
 use crate::MAX_TABS;
 use crate::TIME_LABELS;
-use crate::save_path;
-use tools::hex_str_to_color;
 use tools::file_tree;
+use tools::hex_str_to_color;
 
 impl Calcifer {
 	pub fn handle_confirm(&mut self) {
@@ -123,7 +123,7 @@ impl Calcifer {
 	}
 
 	pub fn open_file(&mut self, path_option: Option<&Path>) {
-		if let Some(path) = path_option.clone() {
+		if let Some(path) = path_option {
 			for (index, tab) in self.tabs.clone().iter().enumerate() {
 				if tab.path == path {
 					self.selected_tab = tools::TabNumber::from_index(index);
@@ -185,32 +185,34 @@ impl Calcifer {
 		));
 		result
 	}
-	
-	pub fn list_files(&mut self, ui: &mut egui::Ui, file: &file_tree::File, depth: isize, n_files: &mut usize) {
+
+	pub fn list_files(
+		&mut self,
+		ui: &mut egui::Ui,
+		file: &file_tree::File,
+		depth: isize,
+		n_files: &mut usize,
+	) {
 		*n_files += 1;
-		
+
 		if let Some(folder_content) = &file.folder_content {
 			let collapsing_response = egui::CollapsingHeader::new(file.name.clone())
 				.default_open(depth > 0)
 				.show(ui, |ui| {
 					if !self.tree_dir_opened.contains(&file.name) {
-						return
+						return;
 					}
 					for deeper_file in folder_content {
-						self.list_files(ui, &deeper_file, depth - 1, n_files);
+						self.list_files(ui, deeper_file, depth - 1, n_files);
 					}
 				});
 			if collapsing_response.fully_closed() {
 				self.tree_dir_opened.retain(|s| s != &file.name);
-			} else {
-				if !self.tree_dir_opened.contains(&file.name) {
-					self.tree_dir_opened.push(file.name.clone());
-				}
+			} else if !self.tree_dir_opened.contains(&file.name) {
+				self.tree_dir_opened.push(file.name.clone());
 			}
-		} else {
-			if ui.button(&file.name).clicked() {
-				self.open_file(Some(&file.path));
-			}
+		} else if ui.button(&file.name).clicked() {
+			self.open_file(Some(&file.path));
 		}
 	}
 }

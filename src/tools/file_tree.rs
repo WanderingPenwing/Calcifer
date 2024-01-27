@@ -14,7 +14,6 @@ pub struct File {
 	pub folder_open: bool,
 }
 
-
 impl File {
 	pub fn new_file(name: String, path: PathBuf) -> Self {
 		Self {
@@ -25,7 +24,6 @@ impl File {
 		}
 	}
 }
-
 
 pub fn generate_file_tree(path: &Path, depth: isize) -> Option<File> {
 	if let Some(file_name) = path.file_name() {
@@ -52,7 +50,10 @@ pub fn generate_file_tree(path: &Path, depth: isize) -> Option<File> {
 
 	match fs::read_dir(path) {
 		Err(err) => {
-			return Some(File::new_file(format!("Error reading directory: {}", err), path.to_path_buf()));
+			Some(File::new_file(
+				format!("Error reading directory: {}", err),
+				path.to_path_buf(),
+			))
 		}
 		Ok(entries) => {
 			let mut paths: Vec<Result<fs::DirEntry, io::Error>> = entries
@@ -60,7 +61,7 @@ pub fn generate_file_tree(path: &Path, depth: isize) -> Option<File> {
 				.collect();
 
 			paths.sort_by(|a, b| match (a, b) {
-				(Ok(entry_a), Ok(entry_b)) => tools::sort_directories_first(&entry_a, &entry_b),
+				(Ok(entry_a), Ok(entry_b)) => tools::sort_directories_first(entry_a, entry_b),
 				(Err(_), Ok(_)) => std::cmp::Ordering::Greater,
 				(Ok(_), Err(_)) => std::cmp::Ordering::Less,
 				(Err(_), Err(_)) => std::cmp::Ordering::Equal,
@@ -83,17 +84,17 @@ pub fn generate_file_tree(path: &Path, depth: isize) -> Option<File> {
 					}
 				}
 			}
-			
+
 			if folder_content.is_empty() {
 				return None;
 			}
 
-			return Some(File {
+			Some(File {
 				name,
 				path: path.to_path_buf(),
 				folder_content: Some(folder_content),
 				folder_open: false,
-			});
+			})
 		}
 	}
 }
