@@ -44,8 +44,14 @@ jobs:
             libglib2.0-dev \
         # Add any other dependencies needed by your project
         
+      - name: Debug PKG_CONFIG_PATH
+        run: echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+        
       - name: Set PKG_CONFIG_PATH
         run: export PKG_CONFIG_PATH=/usr/share/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig
+
+      - name: Debug PKG_CONFIG_PATH
+        run: echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
 
       - name: Install Rust
         # Or @nightly if you want
