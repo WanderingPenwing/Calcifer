@@ -36,12 +36,16 @@ jobs:
       - name: Get the release version from the tag
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             libglib2.0-dev \
         # Add any other dependencies needed by your project
+        
+      - name: Set PKG_CONFIG_PATH
+        run: export PKG_CONFIG_PATH="/usr/lib/pkgconfig"
 
       - name: Install Rust
         # Or @nightly if you want
