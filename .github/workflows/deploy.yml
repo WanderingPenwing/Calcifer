@@ -45,7 +45,7 @@ jobs:
         # Add any other dependencies needed by your project
         
       - name: Set PKG_CONFIG_PATH
-        run: export PKG_CONFIG_PATH="/usr/lib/pkgconfig"
+        run: export PKG_CONFIG_PATH=/usr/share/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig
 
       - name: Install Rust
         # Or @nightly if you want
