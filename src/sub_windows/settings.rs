@@ -1,5 +1,4 @@
-use crate::ColorTheme;
-use crate::DEFAULT_THEMES;
+use crate::editor::{themes::DEFAULT_THEMES, ColorTheme};
 use eframe::egui;
 
 pub struct SettingsWindow {

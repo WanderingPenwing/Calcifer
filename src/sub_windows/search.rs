@@ -1,7 +1,7 @@
 use eframe::egui;
 use std::cmp::min;
 
-use crate::tools::{tabs::Tab, tabs::TabNumber};
+use crate::panels::{Tab, TabNumber};
 use crate::RED;
 
 enum Action {

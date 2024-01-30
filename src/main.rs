@@ -1,15 +1,16 @@
-mod calcifer;
-mod tools;
-
-use calcifer::code_editor::ColorTheme;
 use eframe::egui;
-use egui::FontFamily::Proportional;
-use egui::FontId;
-use egui::TextStyle::{Body, Button, Heading, Monospace, Small};
+use egui::{
+    FontFamily::Proportional,
+    FontId,
+    TextStyle::{Body, Button, Heading, Monospace, Small},
+};
 use homedir::get_my_home;
 use std::{ops::Range, path::PathBuf, sync::Arc, thread, time};
 
-use calcifer::code_editor::themes::DEFAULT_THEMES;
+mod core;
+mod editor;
+mod panels;
+mod sub_windows;
 
 #[cfg(debug_assertions)]
 const TITLE: &str = " debug";
@@ -30,7 +31,7 @@ const DISPLAY_PATH_DEPTH: usize = 3;
 const MAX_TABS: usize = 20;
 
 fn main() -> Result<(), eframe::Error> {
-    let icon_data = tools::load_icon().unwrap_or_default();
+    let icon_data = core::load_icon().unwrap_or_default();
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -40,13 +41,13 @@ fn main() -> Result<(), eframe::Error> {
     };
 
     // Attempt to load previous state
-    let app_state: tools::AppState = if save_path().exists() {
-        match tools::load_state(save_path().as_path()) {
+    let app_state: core::AppState = if save_path().exists() {
+        match core::load_state(save_path().as_path()) {
             Ok(app_state) => app_state,
-            Err(_) => tools::AppState::default(),
+            Err(_) => core::AppState::default(),
         }
     } else {
-        tools::AppState::default()
+        core::AppState::default()
     };
 
     eframe::run_native(
@@ -57,33 +58,33 @@ fn main() -> Result<(), eframe::Error> {
 }
 
 struct Calcifer {
-    selected_tab: tools::TabNumber,
-    tabs: Vec<tools::Tab>,
+    selected_tab: panels::TabNumber,
+    tabs: Vec<panels::Tab>,
 
     command: String,
-    command_history: Vec<tools::CommandEntry>,
+    command_history: Vec<panels::CommandEntry>,
 
-    theme: ColorTheme,
+    theme: editor::ColorTheme,
     font_size: f32,
 
     project_mode: bool,
 
     home: PathBuf,
     tree_dir_opened: Vec<String>,
-    file_tree: Option<tools::file_tree::File>,
+    file_tree: Option<panels::FileEntry>,
 
     tree_visible: bool,
     profiler_visible: bool,
     terminal_visible: bool,
 
-    close_tab_confirm: tools::confirm::ConfirmWindow,
+    close_tab_confirm: sub_windows::ConfirmWindow,
     tab_to_close: usize,
-    refresh_confirm: tools::confirm::ConfirmWindow,
-    exit_confirm: tools::confirm::ConfirmWindow,
+    refresh_confirm: sub_windows::ConfirmWindow,
+    exit_confirm: sub_windows::ConfirmWindow,
 
-    search_menu: tools::search::SearchWindow,
-    settings_menu: tools::settings::SettingsWindow,
-    shortcuts_menu: tools::shortcuts::ShortcutsWindow,
+    search_menu: sub_windows::SearchWindow,
+    settings_menu: sub_windows::SettingsWindow,
+    shortcuts_menu: sub_windows::ShortcutsWindow,
 
     time_watch: Vec<f32>,
     next_frame: time::Instant,
@@ -92,13 +93,13 @@ struct Calcifer {
 impl Default for Calcifer {
     fn default() -> Self {
         Self {
-            selected_tab: tools::TabNumber::from_index(0),
-            tabs: vec![tools::Tab::default()],
+            selected_tab: panels::TabNumber::from_index(0),
+            tabs: vec![panels::Tab::default()],
 
             command: String::new(),
             command_history: Vec::new(),
 
-            theme: DEFAULT_THEMES[0],
+            theme: editor::themes::DEFAULT_THEMES[0],
             font_size: 14.0,
 
             project_mode: true,
@@ -111,20 +112,20 @@ impl Default for Calcifer {
             profiler_visible: false,
             terminal_visible: false,
 
-            close_tab_confirm: tools::confirm::ConfirmWindow::new(
+            close_tab_confirm: sub_windows::ConfirmWindow::new(
                 "You have some unsaved changes, Do you still want to close this document ?",
                 "Confirm Close",
             ),
             tab_to_close: 0,
-            refresh_confirm: tools::confirm::ConfirmWindow::new(
+            refresh_confirm: sub_windows::ConfirmWindow::new(
                 "You have some unsaved changes, Do you still want to refresh this document ?",
                 "Confirm Refresh",
             ),
-            exit_confirm: tools::confirm::ConfirmWindow::new("", "Confirm Exit"),
+            exit_confirm: sub_windows::ConfirmWindow::new("", "Confirm Exit"),
 
-            search_menu: tools::search::SearchWindow::default(),
-            settings_menu: tools::settings::SettingsWindow::new(DEFAULT_THEMES[0]),
-            shortcuts_menu: tools::shortcuts::ShortcutsWindow::new(),
+            search_menu: sub_windows::SearchWindow::default(),
+            settings_menu: sub_windows::SettingsWindow::new(editor::themes::DEFAULT_THEMES[0]),
+            shortcuts_menu: sub_windows::ShortcutsWindow::new(),
 
             time_watch: vec![0.0; TIME_LABELS.len()],
             next_frame: time::Instant::now(),
