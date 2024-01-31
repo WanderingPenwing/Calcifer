@@ -34,82 +34,6 @@ impl FileEntry {
     }
 }
 
-pub fn generate_file_tree(path: &Path, depth: isize) -> Option<FileEntry> {
-    if let Some(file_name) = path.file_name() {
-        if file_name.to_string_lossy().starts_with('.') {
-            return None;
-        }
-        let extension = path.extension().and_then(|ext| ext.to_str());
-        if !ALLOWED_FILE_EXTENSIONS.contains(&extension.unwrap_or_default()) {
-            return None;
-        }
-    } else {
-        return None;
-    }
-
-    let name = path
-        .file_name()
-        .unwrap_or_else(|| OsStr::new(""))
-        .to_string_lossy()
-        .into_owned();
-
-    if !path.is_dir() {
-        return Some(FileEntry::new_entry(name, path.to_path_buf()));
-    }
-
-    if depth < 0 {
-        return Some(FileEntry::end_of_branch(name, path.to_path_buf()));
-    }
-
-    match fs::read_dir(path) {
-        Err(err) => Some(FileEntry::new_entry(
-            format!("Error reading directory: {}", err),
-            path.to_path_buf(),
-        )),
-        Ok(entries) => {
-            let mut paths: Vec<Result<fs::DirEntry, io::Error>> = entries
-                .map(|r| r.map_err(|e| io::Error::new(io::ErrorKind::Other, e)))
-                .collect();
-
-            paths.sort_by(|a, b| match (a, b) {
-                (Ok(entry_a), Ok(entry_b)) => sort_directories_first(entry_a, entry_b),
-                (Err(_), Ok(_)) => std::cmp::Ordering::Greater,
-                (Ok(_), Err(_)) => std::cmp::Ordering::Less,
-                (Err(_), Err(_)) => std::cmp::Ordering::Equal,
-            });
-
-            let mut folder_content = Vec::new();
-
-            for result in paths {
-                match result {
-                    Ok(entry) => {
-                        if let Some(file) = generate_file_tree(&entry.path(), depth - 1) {
-                            folder_content.push(file);
-                        }
-                    }
-                    Err(err) => {
-                        folder_content.push(FileEntry::new_entry(
-                            format!("Error reading entry: {}", err),
-                            path.to_path_buf(),
-                        ));
-                    }
-                }
-            }
-
-            if folder_content.is_empty() {
-                return None;
-            }
-
-            Some(FileEntry {
-                name,
-                path: path.to_path_buf(),
-                folder_content: Some(folder_content),
-                content_checked: true,
-            })
-        }
-    }
-}
-
 pub fn update_file_tree(file: FileEntry, opened_dirs: Vec<String>) -> FileEntry {
     if opened_dirs.contains(&file.name) {
         if let Some(folder_content) = &file.folder_content {
@@ -120,17 +44,17 @@ pub fn update_file_tree(file: FileEntry, opened_dirs: Vec<String>) -> FileEntry 
                 .iter()
                 .map(|entry| update_file_tree(entry.clone(), opened_dirs.clone()))
                 .collect();
-            return FileEntry {
+            FileEntry {
                 name: file.name,
                 path: file.path,
                 folder_content: Some(updated_content),
                 content_checked: true,
-            };
+            }
         } else {
-            return file;
+            file
         }
     } else {
-        return file;
+        file
     }
 }
 
@@ -182,7 +106,10 @@ pub fn generate_folder_entry(path: &Path) -> FileEntry {
             }
         }
     } else {
-        FileEntry::new_entry(format!("Error reading directory name"), path.to_path_buf())
+        FileEntry::new_entry(
+            "Error reading directory name".to_string(),
+            path.to_path_buf(),
+        )
     }
 }
 
@@ -208,7 +135,7 @@ fn generate_entry(path: &Path) -> Option<FileEntry> {
     if !path.is_dir() {
         return Some(FileEntry::new_entry(name, path.to_path_buf()));
     }
-    return Some(FileEntry::end_of_branch(name, path.to_path_buf()));
+    Some(FileEntry::end_of_branch(name, path.to_path_buf()))
 }
 
 fn sort_directories_first(a: &std::fs::DirEntry, b: &std::fs::DirEntry) -> Ordering {

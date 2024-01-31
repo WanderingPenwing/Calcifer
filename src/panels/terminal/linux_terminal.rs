@@ -67,17 +67,27 @@ impl CommandEntry {
     pub fn update(&mut self) {
         if let Some(buffer) = &mut self.buffer {
             let mut output = String::new();
-            let _ = buffer.output_buffer.read_line(&mut output);
-            if !remove_line_break(output.to_string()).is_empty() {
-                self.result.push(Line::output(format!("{}\n", output)));
+            loop {
+                let _ = buffer.output_buffer.read_line(&mut output);
+                if !remove_line_break(output.to_string()).is_empty() {
+                    self.result.push(Line::output(format!("{}\n", output)));
+                    output = "".to_string()
+                } else {
+                    break;
+                }
             }
+
             let mut error = String::new();
-            let _ = buffer.error_buffer.read_line(&mut error);
-            if !remove_line_break(error.to_string()).is_empty() {
-                self.result.push(Line::error(format!("{}\n", error)));
+            loop {
+                let _ = buffer.error_buffer.read_line(&mut error);
+                if !remove_line_break(error.to_string()).is_empty() {
+                    self.result.push(Line::error(format!("{}\n", error)));
+                    error = "".to_string()
+                } else {
+                    break;
+                }
             }
-        }
-        if let Some(buffer) = &mut self.buffer {
+
             if let Ok(Some(_exit_status)) = buffer.child.try_wait() {
                 //self.result.push(Line::output(format!("Command finished with status: {:?}\n", exit_status)));
                 self.finished = true;

@@ -218,7 +218,8 @@ impl Calcifer {
         } else if ui.button(&file.name).clicked() {
             self.open_file(Some(&file.path));
         }
-        return false;
+
+        false
     }
 }
 
