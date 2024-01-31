@@ -18,10 +18,10 @@ const TITLE: &str = " debug";
 #[cfg(not(debug_assertions))]
 const TITLE: &str = "";
 
-const ALLOWED_FILE_EXTENSIONS: [&str; 6] = ["", "rs", "toml", "txt", "project", "sh"];
+const ALLOWED_FILE_EXTENSIONS: [&str; 7] = ["", "rs", "toml", "txt", "project", "sh", "md"];
 const PROJECT_EXTENSION: &str = "project";
 const TERMINAL_HEIGHT: f32 = 200.0;
-const TERMINAL_RANGE: Range<f32> = 100.0..500.0;
+const TERMINAL_RANGE: Range<f32> = 100.0..600.0;
 const RED: egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
 const TIME_LABELS: [&str; 7] = [
     "input", "settings", "tree", "terminal", "tabs", "content", "windows",
@@ -72,6 +72,7 @@ struct Calcifer {
     home: PathBuf,
     tree_dir_opened: Vec<String>,
     file_tree: Option<panels::FileEntry>,
+    n_file_displayed: usize,
 
     tree_visible: bool,
     profiler_visible: bool,
@@ -107,6 +108,7 @@ impl Default for Calcifer {
             home: get_my_home().unwrap().unwrap(),
             tree_dir_opened: vec![],
             file_tree: None,
+            n_file_displayed: 0,
 
             tree_visible: false,
             profiler_visible: false,

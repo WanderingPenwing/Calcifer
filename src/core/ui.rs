@@ -63,6 +63,8 @@ impl Calcifer {
                 ui.label("Bookshelf ");
             });
             ui.separator();
+            ui.label(format!("{} files displayed", self.n_file_displayed));
+            ui.separator();
             egui::ScrollArea::vertical().show(ui, |ui| {
                 if let Some(file_tree) = self.file_tree.clone() {
                     let update_requested = self.list_files(ui, &file_tree, &mut n_files);
@@ -75,10 +77,10 @@ impl Calcifer {
                 } else {
                     ui.label("No book on the Bookshelf");
                 }
+                ui.separator();
             });
-            ui.separator();
-            ui.label(format!("{} files displayed", n_files));
         });
+        self.n_file_displayed = n_files.clone();
     }
 
     pub fn draw_bottom_tray(&mut self, ctx: &egui::Context) {
