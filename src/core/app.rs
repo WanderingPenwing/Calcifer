@@ -190,30 +190,35 @@ impl Calcifer {
         &mut self,
         ui: &mut egui::Ui,
         file: &panels::FileEntry,
-        depth: isize,
         n_files: &mut usize,
-    ) {
+    ) -> bool {
         *n_files += 1;
 
         if let Some(folder_content) = &file.folder_content {
+            let mut check_for_update: bool = false;
             let collapsing_response = egui::CollapsingHeader::new(file.name.clone())
-                .default_open(depth > 0)
+                .default_open(self.tree_dir_opened.contains(&file.name))
                 .show(ui, |ui| {
                     if !self.tree_dir_opened.contains(&file.name) {
                         return;
                     }
                     for deeper_file in folder_content {
-                        self.list_files(ui, deeper_file, depth - 1, n_files);
+                        if self.list_files(ui, deeper_file, n_files) {
+                            check_for_update = true;
+                        }
                     }
                 });
             if collapsing_response.fully_closed() {
                 self.tree_dir_opened.retain(|s| s != &file.name);
             } else if !self.tree_dir_opened.contains(&file.name) {
                 self.tree_dir_opened.push(file.name.clone());
+                return !file.content_checked;
             }
+            return check_for_update;
         } else if ui.button(&file.name).clicked() {
             self.open_file(Some(&file.path));
         }
+        return false;
     }
 }
 

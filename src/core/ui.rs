@@ -54,20 +54,28 @@ impl Calcifer {
         if !self.tree_visible {
             return;
         }
+        if self.file_tree.is_none() {
+            self.file_tree = Some(panels::generate_folder_entry(self.home.as_path()));
+        }
+        let mut n_files: usize = 0;
         egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label("Bookshelf ");
-                if ui.add(egui::Button::new("📖")).clicked() {
-                    self.file_tree = panels::generate_file_tree(self.home.as_path(), 7);
-                }
             });
             ui.separator();
-            let mut n_files: usize = 0;
-            if let Some(file_tree) = self.file_tree.clone() {
-                self.list_files(ui, &file_tree, 1, &mut n_files);
-            } else {
-                ui.label("No book on the Bookshelf");
-            }
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                if let Some(file_tree) = self.file_tree.clone() {
+                    let update_requested = self.list_files(ui, &file_tree, &mut n_files);
+                    if update_requested {
+                        self.file_tree = Some(panels::update_file_tree(
+                            file_tree,
+                            self.tree_dir_opened.clone(),
+                        ));
+                    }
+                } else {
+                    ui.label("No book on the Bookshelf");
+                }
+            });
             ui.separator();
             ui.label(format!("{} files displayed", n_files));
         });
