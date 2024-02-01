@@ -151,7 +151,7 @@ impl eframe::App for Calcifer {
 		style.text_styles = [
 			(Heading, FontId::new(self.font_size * 1.6, FontFamily::Proportional)),
 			(Body, FontId::new(self.font_size, FontFamily::Proportional)),
-			(Monospace, FontId::new(self.font_size * 0.8, FontFamily::Monospace)),
+			(Monospace, FontId::new(self.font_size, FontFamily::Monospace)),
 			(Button, FontId::new(self.font_size, FontFamily::Proportional)),
 			(Small, FontId::new(self.font_size, FontFamily::Proportional)),
 		]

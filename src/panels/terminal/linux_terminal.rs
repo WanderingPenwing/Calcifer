@@ -69,7 +69,7 @@ impl CommandEntry {
 			let mut output = String::new();
 			loop {
 				let _ = buffer.output_buffer.read_line(&mut output);
-				if !remove_line_break(output.to_string()).is_empty() {
+				if !output.to_string().is_empty() {
 					self.result.push(Line::output(format!("{}\n", output)));
 					output = "".to_string()
 				} else {
@@ -80,7 +80,7 @@ impl CommandEntry {
 			let mut error = String::new();
 			loop {
 				let _ = buffer.error_buffer.read_line(&mut error);
-				if !remove_line_break(error.to_string()).is_empty() {
+				if !error.to_string().is_empty() {
 					self.result.push(Line::error(format!("{}\n", error)));
 					error = "".to_string()
 				} else {
@@ -90,31 +90,9 @@ impl CommandEntry {
 
 			if let Ok(Some(_exit_status)) = buffer.child.try_wait() {
 				//self.result.push(Line::output(format!("Command finished with status: {:?}\n", exit_status)));
-				self.buffer_dump();
 				self.finished = true;
 			}
 		}
-	}
-	
-	fn buffer_dump(&mut self) {
-//		if self.buffer.is_none() {
-//			return
-//		}
-//		
-//		let output_buffer = &self.buffer.as_ref().unwrap().output_buffer;
-//		for line in output_buffer.lines() {
-//            match line {
-//                Ok(line) => self.result.push(Line::output(format!("{}\n", line))),
-//                Err(_) => return,
-//            }
-//        }
-//		let error_buffer = &self.buffer.as_ref().unwrap().error_buffer;
-//		for line in error_buffer.lines() {
-//            match line {
-//                Ok(line) => self.result.push(Line::error(format!("{}\n", line))),
-//                Err(_) => return,
-//            }
-//        }
 	}
 
 	pub fn copy_error_code(&self) {
