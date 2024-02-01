@@ -385,7 +385,7 @@ impl CodeEditor {
         let mut new_text: String = "".into();
         let extend: isize;
 
-        if substring[1].contains(head) {
+        if substring[1].slice(..head.len() + 1).contains(head) {
             extend = -self.delta_char(substring[1].clone(), head);
             substring[1] = substring[1].replace(&format!("\n{}", head), "\n");
         } else {
