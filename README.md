@@ -46,3 +46,7 @@ Real Ui
 
 # 1.1.0 :
 Better error handling
+
+
+# releases :
+latest : command can fetch multiple lines in the buffer in one frame

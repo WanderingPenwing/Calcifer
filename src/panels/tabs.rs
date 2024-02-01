@@ -92,7 +92,8 @@ fn read_file_contents(path: &Path) -> String {
 }
 
 fn format_file_path(path: &Path, contents: &str) -> PathBuf {
-    if contents.contains("Error reading file") {
+    let error_type = "reading file";
+    if contents.contains(&format!("Error {}", error_type)) {
         "untitled".into()
     } else {
         path.to_path_buf()

@@ -7,3 +7,6 @@ pub use file_tree::*;
 
 mod terminal;
 pub use terminal::*;
+
+mod project_mode;
+pub use project_mode::*;
