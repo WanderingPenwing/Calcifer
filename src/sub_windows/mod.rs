@@ -10,3 +10,6 @@ pub use settings::*;
 
 mod shortcuts;
 pub use shortcuts::*;
+
+mod project_item;
+pub use project_item::*;

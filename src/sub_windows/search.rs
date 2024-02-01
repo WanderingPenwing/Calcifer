@@ -235,9 +235,7 @@ impl SearchWindow {
     }
 
     fn replace(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
-        if self.searched_text != self.search_text {
-            self.search(tabs, &mut *selected_tab);
-        }
+        self.search(tabs, &mut *selected_tab);
 
         let mut done: Vec<TabNumber> = vec![];
         for element in &self.results {
