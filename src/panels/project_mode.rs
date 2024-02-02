@@ -1,4 +1,5 @@
 use eframe::egui;
+use serde::{Deserialize, Serialize};
 use std::{
     cmp::min,
     sync::atomic::{AtomicUsize, Ordering},
@@ -8,6 +9,19 @@ use crate::core::hex_str_to_color;
 use crate::editor::ColorTheme;
 use crate::sub_windows;
 use crate::MAX_PROJECT_COLUMNS;
+
+#[derive(Serialize, Deserialize)]
+pub struct ProjectSave {
+    pub categories: Vec<Category>,
+}
+
+impl ProjectSave {
+    pub fn from_project(project: &Project) -> Self {
+        Self {
+            categories: project.categories.clone(),
+        }
+    }
+}
 
 pub struct Project {
     pub categories: Vec<Category>,
@@ -24,6 +38,17 @@ impl Project {
             was_moving: false,
             item_window: sub_windows::ProjectItemWindow::new(),
         }
+    }
+
+    pub fn update_from_code(&mut self, json: String) {
+        match serde_json::from_str::<ProjectSave>(&json) {
+            Ok(project_save) => self.categories = project_save.categories,
+            Err(_err) => self.categories = vec![Category::create()],
+        }
+    }
+
+    pub fn save_to_code(&self) -> Result<String, std::io::Error> {
+        Ok(serde_json::to_string(&ProjectSave::from_project(self))?)
     }
 
     fn add_category(&mut self) {
@@ -43,7 +68,7 @@ impl Project {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Category {
     name: String,
     pub content: Vec<Item>,
@@ -62,7 +87,7 @@ impl Category {
     }
 }
 
-#[derive(Clone, Hash)]
+#[derive(Clone, Hash, Serialize, Deserialize)]
 pub struct Item {
     pub name: String,
     pub description: String,
@@ -147,20 +172,24 @@ pub fn draw_project(ui: &mut egui::Ui, theme: ColorTheme, project: &mut Project)
                     }
                 }
             }
-
-            if category.name != "+" {
-                if ui.add(egui::Button::new("+")).clicked() {
-                    project.categories[category_index]
-                        .content
-                        .push(Item::new("item"));
-                }
+            if category.name != "+" && ui.add(egui::Button::new("+")).clicked() {
+                project.categories[category_index]
+                    .content
+                    .push(Item::new("item"));
             }
+            //			if category.name != "+" {
+            //				if ui.add(egui::Button::new("+")).clicked() {
+            //					project.categories[category_index]
+            //						.content
+            //						.push(Item::new("item"));
+            //				}
+            //			}
         }
     });
 
     let mut moved = false;
-    let category = project.selected_item.category.clone();
-    let row = project.selected_item.row.clone();
+    let category = project.selected_item.category;
+    let row = project.selected_item.row;
 
     if ui.input(|i| i.key_pressed(egui::Key::ArrowLeft) && i.modifiers.shift)
         && project.selected_item.category > 0

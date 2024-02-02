@@ -81,7 +81,7 @@ impl Calcifer {
                 ui.separator();
             });
         });
-        self.n_file_displayed = n_files.clone();
+        self.n_file_displayed = n_files;
     }
 
     pub fn draw_bottom_tray(&mut self, ctx: &egui::Context) {
@@ -288,16 +288,24 @@ impl Calcifer {
     }
 
     fn draw_project_file(&mut self, ui: &mut egui::Ui) {
-        panels::draw_project(ui, self.theme.clone(), &mut self.project_content);
+        let current_tab = &mut self.tabs[self.selected_tab.to_index()];
+
+        self.project_content
+            .update_from_code(current_tab.code.clone());
+        panels::draw_project(ui, self.theme, &mut self.project_content);
+
+        match self.project_content.save_to_code() {
+            Ok(code) => current_tab.code = code,
+            Err(_err) => (),
+        }
     }
 
     pub fn draw_windows(&mut self, ctx: &egui::Context) {
         if self.project_content.item_window.visible {
             if self.project_content.categories.len() > 1
-                && self.project_content.categories[self.project_content.selected_item.category]
+                && !self.project_content.categories[self.project_content.selected_item.category]
                     .content
-                    .len()
-                    > 0
+                    .is_empty()
             {
                 self.project_content.item_window.show(
                     ctx,
