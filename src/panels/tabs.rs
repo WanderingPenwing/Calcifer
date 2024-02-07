@@ -1,30 +1,6 @@
 use eframe::egui::text_edit::CCursorRange;
 use std::{fs::read_to_string, path::Path, path::PathBuf};
 
-use crate::MAX_TABS;
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum TabNumber {
-    Open,
-    Number(u8), // Using a range for numeric values
-}
-
-impl TabNumber {
-    pub fn from_index(n: usize) -> TabNumber {
-        match n {
-            0..=MAX_TABS => TabNumber::Number(n as u8),
-            _ => TabNumber::Number(0),
-        }
-    }
-
-    pub fn to_index(&self) -> usize {
-        match self {
-            TabNumber::Number(n) => *n as usize,
-            _ => 0,
-        }
-    }
-}
-
 #[derive(Clone, PartialEq)]
 pub struct Tab {
     pub path: PathBuf,

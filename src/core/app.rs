@@ -8,7 +8,6 @@ use crate::panels;
 use crate::save_path;
 use crate::sub_windows;
 use crate::Calcifer;
-use crate::MAX_TABS;
 use crate::TIME_LABELS;
 
 impl Calcifer {
@@ -20,12 +19,12 @@ impl Calcifer {
 
         if self.refresh_confirm.proceed {
             self.refresh_confirm.close();
-            self.tabs[self.selected_tab.to_index()].refresh();
+            self.tabs[self.selected_tab].refresh();
         }
     }
 
     pub fn save_tab(&self) -> Option<PathBuf> {
-        if self.tabs[self.selected_tab.to_index()]
+        if self.tabs[self.selected_tab]
             .path
             .file_name()
             .map_or(true, |name| name.to_string_lossy() == "untitled")
@@ -33,13 +32,13 @@ impl Calcifer {
             self.save_tab_as()
         } else {
             if let Err(err) = fs::write(
-                &self.tabs[self.selected_tab.to_index()].path,
-                &self.tabs[self.selected_tab.to_index()].code,
+                &self.tabs[self.selected_tab].path,
+                &self.tabs[self.selected_tab].code,
             ) {
                 eprintln!("Error writing file: {}", err);
                 return None;
             }
-            Some(self.tabs[self.selected_tab.to_index()].path.clone())
+            Some(self.tabs[self.selected_tab].path.clone())
         }
     }
 
@@ -48,7 +47,7 @@ impl Calcifer {
             .set_directory(self.home.as_path())
             .save_file()
         {
-            if let Err(err) = fs::write(&path, &self.tabs[self.selected_tab.to_index()].code) {
+            if let Err(err) = fs::write(&path, &self.tabs[self.selected_tab].code) {
                 eprintln!("Error writing file: {}", err);
                 return None;
             }
@@ -60,8 +59,8 @@ impl Calcifer {
     pub fn handle_save_file(&mut self, path_option: Option<PathBuf>) {
         if let Some(path) = path_option {
             println!("File saved successfully at: {:?}", path);
-            self.tabs[self.selected_tab.to_index()].path = path;
-            self.tabs[self.selected_tab.to_index()].saved = true;
+            self.tabs[self.selected_tab].path = path;
+            self.tabs[self.selected_tab].saved = true;
         } else {
             println!("File save failed.");
         }
@@ -112,38 +111,35 @@ impl Calcifer {
 
     pub fn move_through_tabs(&mut self, forward: bool) {
         let new_index = if forward {
-            (self.selected_tab.to_index() + 1) % self.tabs.len()
+            (self.selected_tab + 1) % self.tabs.len()
         } else {
             self.selected_tab
-                .to_index()
                 .checked_sub(1)
                 .unwrap_or(self.tabs.len() - 1)
         };
-        self.selected_tab = panels::TabNumber::from_index(new_index);
+        self.selected_tab = new_index;
     }
 
     pub fn open_file(&mut self, path_option: Option<&Path>) {
         if let Some(path) = path_option {
             for (index, tab) in self.tabs.clone().iter().enumerate() {
                 if tab.path == path {
-                    self.selected_tab = panels::TabNumber::from_index(index);
+                    self.selected_tab = index;
                     return;
                 }
             }
         }
-        if self.tabs.len() < MAX_TABS {
-            if let Some(path) = path_option {
-                self.tabs.push(panels::Tab::new(path.to_path_buf()));
-            } else {
-                self.tabs.push(panels::Tab::default());
-            }
-            self.selected_tab = panels::TabNumber::from_index(self.tabs.len() - 1);
+        if let Some(path) = path_option {
+            self.tabs.push(panels::Tab::new(path.to_path_buf()));
+        } else {
+            self.tabs.push(panels::Tab::default());
         }
+        self.selected_tab = self.tabs.len() - 1;
     }
 
     pub fn delete_tab(&mut self, index: usize) {
         self.tabs.remove(index);
-        self.selected_tab = panels::TabNumber::from_index(min(index, self.tabs.len() - 1));
+        self.selected_tab = min(index, self.tabs.len() - 1);
     }
 
     pub fn toggle(&self, ui: &mut egui::Ui, display: bool, title: &str) -> bool {

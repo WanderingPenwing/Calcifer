@@ -27,7 +27,6 @@ const TIME_LABELS: [&str; 7] = [
 ];
 const MAX_FPS: f32 = 30.0;
 const DISPLAY_PATH_DEPTH: usize = 3;
-const MAX_TABS: usize = 20;
 const MAX_PROJECT_COLUMNS: usize = 8;
 const RUNNING_COMMAND_REFRESH_DELAY: f32 = 0.1;
 
@@ -59,7 +58,7 @@ fn main() -> Result<(), eframe::Error> {
 }
 
 struct Calcifer {
-    selected_tab: panels::TabNumber,
+    selected_tab: usize,
     tabs: Vec<panels::Tab>,
 
     command: String,
@@ -96,7 +95,7 @@ struct Calcifer {
 impl Default for Calcifer {
     fn default() -> Self {
         Self {
-            selected_tab: panels::TabNumber::from_index(0),
+            selected_tab: 0,
             tabs: vec![panels::Tab::default()],
 
             command: String::new(),
@@ -170,15 +169,15 @@ impl eframe::App for Calcifer {
         if ctx.input(|i| i.key_pressed(egui::Key::R) && i.modifiers.ctrl)
             && !self.refresh_confirm.visible
         {
-            if self.tabs[self.selected_tab.to_index()].saved {
-                self.tabs[self.selected_tab.to_index()].refresh();
+            if self.tabs[self.selected_tab].saved {
+                self.tabs[self.selected_tab].refresh();
             } else {
                 self.refresh_confirm.ask();
             }
         }
 
         if ctx.input(|i| i.key_pressed(egui::Key::Enter))
-            && self.tabs[self.selected_tab.to_index()].language == PROJECT_EXTENSION
+            && self.tabs[self.selected_tab].language == PROJECT_EXTENSION
         {
             self.project_content.item_window.visible = true;
         }
@@ -252,8 +251,7 @@ impl eframe::App for Calcifer {
         self.time_watch[3] = watch.elapsed().as_micros() as f32 / 1000.0;
         watch = time::Instant::now();
 
-        //self.draw_tab_panel(ctx);
-        self.draw_alternate_tab_panel(ctx);
+        self.draw_tab_panel(ctx);
 
         self.time_watch[4] = watch.elapsed().as_micros() as f32 / 1000.0;
         watch = time::Instant::now();

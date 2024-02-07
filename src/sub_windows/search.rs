@@ -1,7 +1,7 @@
 use eframe::egui;
 use std::cmp::min;
 
-use crate::panels::{Tab, TabNumber};
+use crate::panels::Tab;
 use crate::RED;
 
 enum Action {
@@ -12,21 +12,11 @@ enum Action {
     None,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Selection {
-    pub tab: TabNumber,
+    pub tab: usize,
     pub start: usize,
     pub end: usize,
-}
-
-impl Default for Selection {
-    fn default() -> Self {
-        Self {
-            tab: TabNumber::from_index(0),
-            start: 0,
-            end: 0,
-        }
-    }
 }
 
 pub struct SearchWindow {
@@ -72,7 +62,7 @@ impl Default for SearchWindow {
 }
 
 impl SearchWindow {
-    pub fn show(&mut self, ctx: &egui::Context, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
+    pub fn show(&mut self, ctx: &egui::Context, tabs: &mut Vec<Tab>, selected_tab: &mut usize) {
         let mut visible = self.visible;
         egui::Window::new("Search")
             .open(&mut visible) //I want it to be able to change its visibility (if user close manually)
@@ -82,7 +72,7 @@ impl SearchWindow {
         self.visible = self.visible && visible;
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
+    fn ui(&mut self, ui: &mut egui::Ui, tabs: &mut Vec<Tab>, selected_tab: &mut usize) {
         ui.set_min_width(250.0);
 
         let font_id = egui::TextStyle::Body.resolve(ui.style());
@@ -171,7 +161,7 @@ impl SearchWindow {
         self.results[self.current_result].end
     }
 
-    fn search(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
+    fn search(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut usize) {
         if self.search_text.is_empty() {
             return;
         }
@@ -180,14 +170,10 @@ impl SearchWindow {
 
         if self.across_documents {
             for (index, tab) in tabs.iter().enumerate() {
-                search_results
-                    .extend(self.match_text(tab.code.clone(), TabNumber::from_index(index)));
+                search_results.extend(self.match_text(tab.code.clone(), index));
             }
         } else {
-            search_results.extend(self.match_text(
-                tabs[selected_tab.to_index()].code.clone(),
-                selected_tab.clone(),
-            ));
+            search_results.extend(self.match_text(tabs[*selected_tab].code.clone(), *selected_tab));
         }
 
         self.searched_text = self.search_text.clone();
@@ -199,11 +185,11 @@ impl SearchWindow {
         }
     }
 
-    fn match_text(&self, tab_text: String, tab_number: TabNumber) -> Vec<Selection> {
+    fn match_text(&self, tab_text: String, tab_number: usize) -> Vec<Selection> {
         let matches = tab_text
             .match_indices(&self.search_text.clone())
             .map(|(i, _)| Selection {
-                tab: tab_number.clone(),
+                tab: tab_number,
                 start: i,
                 end: i + self.search_text.len(),
             })
@@ -212,7 +198,7 @@ impl SearchWindow {
         matches
     }
 
-    fn find_result(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber, direction: i32) {
+    fn find_result(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut usize, direction: i32) {
         if self.searched_text != self.search_text {
             self.search(tabs, &mut *selected_tab);
         } else if !self.results.is_empty() {
@@ -220,33 +206,32 @@ impl SearchWindow {
                 (self.current_result as i32 + direction + self.results.len() as i32) as usize
                     % self.results.len();
             self.result_selected = false;
-            *selected_tab = self.results[self.current_result].tab.clone();
+            *selected_tab = self.results[self.current_result].tab;
 
             let target = self.results[self.current_result].start;
-            let code = tabs[selected_tab.to_index()].code.clone();
+            let code = tabs[*selected_tab].code.clone();
             let (upstream, _downstream) = code.split_at(target);
             let row = upstream
                 .match_indices(&"\n".to_string())
                 .collect::<Vec<_>>()
                 .len();
-            tabs[selected_tab.to_index()].scroll_offset =
-                self.row_height * row.saturating_sub(5) as f32;
+            tabs[*selected_tab].scroll_offset = self.row_height * row.saturating_sub(5) as f32;
         }
     }
 
-    fn replace(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut TabNumber) {
+    fn replace(&mut self, tabs: &mut Vec<Tab>, selected_tab: &mut usize) {
         self.search(tabs, &mut *selected_tab);
 
-        let mut done: Vec<TabNumber> = vec![];
+        let mut done: Vec<usize> = vec![];
         for element in &self.results {
             if done.contains(&element.tab) {
                 continue;
             }
-            tabs[element.tab.to_index()].code = tabs[element.tab.to_index()]
+            tabs[element.tab].code = tabs[element.tab]
                 .code
                 .replace(&self.search_text, &self.replace_text);
-            tabs[element.tab.to_index()].saved = false;
-            done.push(element.tab.clone())
+            tabs[element.tab].saved = false;
+            done.push(element.tab)
         }
     }
 }
