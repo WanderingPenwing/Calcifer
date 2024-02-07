@@ -86,8 +86,9 @@ impl Tab {
 }
 
 fn read_file_contents(path: &Path) -> String {
+    let error_type = "reading file";
     read_to_string(path)
-        .map_err(|err| format!("// Error reading file: {}", err))
+        .map_err(|err| format!("// Error {}: {}", error_type, err))
         .unwrap_or_else(|err_msg| err_msg)
 }
 
