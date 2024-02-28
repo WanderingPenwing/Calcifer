@@ -399,6 +399,7 @@ fn to_syntax(language: &str) -> Syntax {
 	match language {
 		"py" => Syntax::python(),
 		"rs" => Syntax::rust(),
+		"js" => Syntax::javascript(),
 		_ => Syntax::shell(),
 	}
 }
