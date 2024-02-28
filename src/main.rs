@@ -17,7 +17,7 @@ const TITLE: &str = " debug";
 #[cfg(not(debug_assertions))]
 const TITLE: &str = "";
 
-const ALLOWED_FILE_EXTENSIONS: [&str; 7] = ["", "rs", "toml", "txt", "project", "sh", "md", "html", "js", "css", "php", "py"];
+const ALLOWED_FILE_EXTENSIONS: [&str; 12] = ["", "rs", "toml", "txt", "project", "sh", "md", "html", "js", "css", "php", "py"];
 const PROJECT_EXTENSION: &str = "project";
 const TERMINAL_HEIGHT: f32 = 200.0;
 const TERMINAL_RANGE: Range<f32> = 100.0..600.0;
@@ -181,9 +181,14 @@ impl eframe::App for Calcifer {
 		{
 			self.project_content.item_window.visible = true;
 		}
-
+		
 		if ctx.input(|i| i.key_pressed(egui::Key::S) && i.modifiers.ctrl) {
 			self.handle_save_file(self.save_tab());
+		}
+
+		if ctx.input(|i| i.key_pressed(egui::Key::T) && i.modifiers.ctrl) {
+			self.file_tree = None;
+			self.tree_dir_opened = vec![];
 		}
 
 		if ctx.input(|i| i.key_pressed(egui::Key::S) && i.modifiers.ctrl && i.modifiers.shift) {
