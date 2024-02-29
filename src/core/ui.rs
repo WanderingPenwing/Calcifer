@@ -295,7 +295,7 @@ impl Calcifer {
 
 			ui.separator();
 			if self.tabs[self.selected_tab].language == PROJECT_EXTENSION {
-				self.draw_project_file(ui);
+				self.draw_project_file(ctx, ui);
 			} else {
 				self.draw_code_file(ui);
 			}
@@ -332,20 +332,13 @@ impl Calcifer {
 			);
 	}
 
-	fn draw_project_file(&mut self, ui: &mut egui::Ui) {
+	fn draw_project_file(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
 		let current_tab = &mut self.tabs[self.selected_tab];
 
 		self.project_content
 			.update_from_code(current_tab.code.clone());
 		panels::draw_project(ui, self.theme, &mut self.project_content);
-
-		match self.project_content.save_to_code() {
-			Ok(code) => current_tab.code = code,
-			Err(_err) => (),
-		}
-	}
-
-	pub fn draw_windows(&mut self, ctx: &egui::Context) {
+		
 		if self.project_content.item_window.visible {
 			if self.project_content.categories.len() > 1
 				&& !self.project_content.categories[self.project_content.selected_item.category]
@@ -362,6 +355,14 @@ impl Calcifer {
 				self.project_content.item_window.visible = false;
 			}
 		}
+
+		match self.project_content.save_to_code() {
+			Ok(code) => current_tab.code = code,
+			Err(_err) => (),
+		}
+	}
+
+	pub fn draw_windows(&mut self, ctx: &egui::Context) {
 		if self.search_menu.visible {
 			self.search_menu
 				.show(ctx, &mut self.tabs, &mut self.selected_tab);
