@@ -345,12 +345,22 @@ impl Calcifer {
 					.content
 					.is_empty()
 			{
-				self.project_content.item_window.show(
+				let delete_item = self.project_content.item_window.show(
 					ctx,
 					&mut self.project_content.categories
 						[self.project_content.selected_item.category]
 						.content[self.project_content.selected_item.row],
 				);
+				
+				if delete_item {
+					self.project_content.item_window.visible = false;
+					self.project_content.categories
+						[self.project_content.selected_item.category]
+						.content.remove(self.project_content.selected_item.row);
+					if self.project_content.selected_item.row >= self.project_content.categories[self.project_content.selected_item.category].content.len() && self.project_content.selected_item.row > 0 {
+						self.project_content.selected_item.row -= 1;
+					}
+				}
 			} else {
 				self.project_content.item_window.visible = false;
 			}
