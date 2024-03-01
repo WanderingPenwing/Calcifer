@@ -357,7 +357,12 @@ impl Calcifer {
 		}
 
 		match self.project_content.save_to_code() {
-			Ok(code) => current_tab.code = code,
+			Ok(code) => {
+				if current_tab.code != code {
+					current_tab.code = code;
+					current_tab.saved = false;
+				}
+			}
 			Err(_err) => (),
 		}
 	}

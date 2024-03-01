@@ -48,5 +48,6 @@ Real Ui
 Better error handling
 
 
-# releases :
-latest : command can fetch multiple lines in the buffer in one frame
+#1.2.0 :
+Project mode (when opening a .project file)
+Support for js
