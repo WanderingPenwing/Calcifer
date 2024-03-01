@@ -176,7 +176,7 @@ impl eframe::App for Calcifer {
 			}
 		}
 
-		if ctx.input(|i| i.key_pressed(egui::Key::Enter))
+		if ctx.input(|i| i.key_pressed(egui::Key::Enter)) && ctx.memory(|m| m.focus() == None)
 			&& self.tabs[self.selected_tab].language == PROJECT_EXTENSION
 		{
 			self.project_content.item_window.visible = true;
