@@ -17,7 +17,7 @@ const TITLE: &str = " debug";
 #[cfg(not(debug_assertions))]
 const TITLE: &str = "";
 
-const ALLOWED_FILE_EXTENSIONS: [&str; 12] = ["", "rs", "toml", "txt", "project", "sh", "md", "html", "js", "css", "php", "py"];
+const ALLOWED_FILE_EXTENSIONS: [&str; 13] = ["", "rs", "toml", "txt", "project", "sh", "md", "html", "js", "css", "php", "py", "kv"];
 const PROJECT_EXTENSION: &str = "project";
 const TERMINAL_HEIGHT: f32 = 200.0;
 const TERMINAL_RANGE: Range<f32> = 100.0..600.0;
