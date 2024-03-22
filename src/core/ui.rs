@@ -191,7 +191,7 @@ impl Calcifer {
 					core::hex_str_to_color(self.theme.bg),
 				);
 				StripBuilder::new(ui)
-					.sizes(Size::remainder(), max(10, self.tabs.len() + 1))
+					.sizes(Size::remainder(), max(6, self.tabs.len() + 1))
 					.sense(egui::Sense::click())
 					.horizontal(|mut strip| {
 						for (index, tab) in self.tabs.clone().iter().enumerate() {

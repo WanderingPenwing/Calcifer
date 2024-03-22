@@ -14,6 +14,7 @@ use serde::Deserialize;
 pub struct AppState {
 	pub tabs: Vec<PathBuf>,
 	pub theme: usize,
+	pub zoom: f32,
 }
 
 pub fn save_state(state: &AppState, file_path: &Path) -> Result<(), std::io::Error> {

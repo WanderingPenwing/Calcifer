@@ -11,215 +11,221 @@ use crate::Calcifer;
 use crate::TIME_LABELS;
 
 impl Calcifer {
-    pub fn handle_confirm(&mut self) {
-        if self.close_tab_confirm.proceed {
-            self.close_tab_confirm.close();
-            self.delete_tab(self.tab_to_close);
-        }
+	pub fn handle_confirm(&mut self) {
+		if self.close_tab_confirm.proceed {
+			self.close_tab_confirm.close();
+			self.delete_tab(self.tab_to_close);
+		}
 
-        if self.refresh_confirm.proceed {
-            self.refresh_confirm.close();
-            self.tabs[self.selected_tab].refresh();
-        }
-    }
+		if self.refresh_confirm.proceed {
+			self.refresh_confirm.close();
+			self.tabs[self.selected_tab].refresh();
+		}
+	}
 
-    pub fn save_tab(&self) -> Option<PathBuf> {
-        if self.tabs[self.selected_tab]
-            .path
-            .file_name()
-            .map_or(true, |name| name.to_string_lossy() == "untitled")
-        {
-            self.save_tab_as()
-        } else {
-            if let Err(err) = fs::write(
-                &self.tabs[self.selected_tab].path,
-                &self.tabs[self.selected_tab].code,
-            ) {
-                eprintln!("Error writing file: {}", err);
-                return None;
-            }
-            Some(self.tabs[self.selected_tab].path.clone())
-        }
-    }
+	pub fn save_tab(&self) -> Option<PathBuf> {
+		if self.tabs[self.selected_tab]
+			.path
+			.file_name()
+			.map_or(true, |name| name.to_string_lossy() == "untitled")
+		{
+			self.save_tab_as()
+		} else {
+			if let Err(err) = fs::write(
+				&self.tabs[self.selected_tab].path,
+				&self.tabs[self.selected_tab].code,
+			) {
+				eprintln!("Error writing file: {}", err);
+				return None;
+			}
+			Some(self.tabs[self.selected_tab].path.clone())
+		}
+	}
 
-    pub fn save_tab_as(&self) -> Option<PathBuf> {
-        if let Some(path) = rfd::FileDialog::new()
-            .set_directory(self.home.as_path())
-            .save_file()
-        {
-            if let Err(err) = fs::write(&path, &self.tabs[self.selected_tab].code) {
-                eprintln!("Error writing file: {}", err);
-                return None;
-            }
-            return Some(path);
-        }
-        None
-    }
+	pub fn save_tab_as(&self) -> Option<PathBuf> {
+		if let Some(path) = rfd::FileDialog::new()
+			.set_directory(self.home.as_path())
+			.save_file()
+		{
+			if let Err(err) = fs::write(&path, &self.tabs[self.selected_tab].code) {
+				eprintln!("Error writing file: {}", err);
+				return None;
+			}
+			return Some(path);
+		}
+		None
+	}
 
-    pub fn handle_save_file(&mut self, path_option: Option<PathBuf>) {
-        if let Some(path) = path_option {
-            println!("File saved successfully at: {:?}", path);
-            self.tabs[self.selected_tab].path = path;
-            self.tabs[self.selected_tab].saved = true;
-        } else {
-            println!("File save failed.");
-        }
-    }
+	pub fn handle_save_file(&mut self, path_option: Option<PathBuf>) {
+		if let Some(path) = path_option {
+			println!("File saved successfully at: {:?}", path);
+			self.tabs[self.selected_tab].path = path;
+			self.tabs[self.selected_tab].saved = true;
+		} else {
+			println!("File save failed.");
+		}
+	}
 
-    pub fn from_app_state(app_state: core::AppState) -> Self {
-        let mut new = Self {
-            theme: DEFAULT_THEMES[min(app_state.theme, DEFAULT_THEMES.len() - 1)],
-            tabs: Vec::new(),
-            settings_menu: sub_windows::SettingsWindow::new(DEFAULT_THEMES[app_state.theme]),
-            ..Default::default()
-        };
+	pub fn from_app_state(app_state: core::AppState) -> Self {
+		let mut new = Self {
+			theme: DEFAULT_THEMES[min(app_state.theme, DEFAULT_THEMES.len() - 1)],
+			tabs: Vec::new(),
+			settings_menu: sub_windows::SettingsWindow::new(DEFAULT_THEMES[app_state.theme]),
+			..Default::default()
+		};
 
-        for path in app_state.tabs {
-            if !path
-                .file_name()
-                .map_or(true, |name| name.to_string_lossy() == "untitled")
-            {
-                new.open_file(Some(&path));
-            }
-        }
+		println!("zoom : {}", app_state.zoom.clone());
+		if app_state.zoom != 0.0 {
+			new.zoom = app_state.zoom;
+		}
 
-        if new.tabs == vec![] {
-            new.open_file(None);
-        }
+		for path in app_state.tabs {
+			if !path
+				.file_name()
+				.map_or(true, |name| name.to_string_lossy() == "untitled")
+			{
+				new.open_file(Some(&path));
+			}
+		}
 
-        new
-    }
+		if new.tabs == vec![] {
+			new.open_file(None);
+		}
 
-    pub fn save_state(&self) {
-        let mut state_theme: usize = 0;
-        if let Some(theme) = DEFAULT_THEMES.iter().position(|&r| r == self.theme) {
-            state_theme = theme;
-        }
+		new
+	}
 
-        let mut state_tabs = vec![];
+	pub fn save_state(&self) {
+		let mut state_theme: usize = 0;
+		if let Some(theme) = DEFAULT_THEMES.iter().position(|&r| r == self.theme) {
+			state_theme = theme;
+		}
 
-        for tab in &self.tabs {
-            state_tabs.push(tab.path.clone());
-        }
-        let app_state = core::AppState {
-            tabs: state_tabs,
-            theme: state_theme,
-        };
+		let mut state_tabs = vec![];
 
-        let _ = core::save_state(&app_state, save_path().as_path());
-    }
+		for tab in &self.tabs {
+			state_tabs.push(tab.path.clone());
+		}
+		let app_state = core::AppState {
+			tabs: state_tabs,
+			theme: state_theme,
+			zoom: self.zoom,
+		};
 
-    pub fn move_through_tabs(&mut self, forward: bool) {
-        let new_index = if forward {
-            (self.selected_tab + 1) % self.tabs.len()
-        } else {
-            self.selected_tab
-                .checked_sub(1)
-                .unwrap_or(self.tabs.len() - 1)
-        };
-        self.selected_tab = new_index;
-    }
+		let _ = core::save_state(&app_state, save_path().as_path());
+	}
 
-    pub fn open_file(&mut self, path_option: Option<&Path>) {
-        if let Some(path) = path_option {
-            for (index, tab) in self.tabs.clone().iter().enumerate() {
-                if tab.path == path {
-                    self.selected_tab = index;
-                    return;
-                }
-            }
-        }
-        if let Some(path) = path_option {
-            self.tabs.push(panels::Tab::new(path.to_path_buf()));
-        } else {
-            self.tabs.push(panels::Tab::default());
-        }
-        self.selected_tab = self.tabs.len() - 1;
-    }
+	pub fn move_through_tabs(&mut self, forward: bool) {
+		let new_index = if forward {
+			(self.selected_tab + 1) % self.tabs.len()
+		} else {
+			self.selected_tab
+				.checked_sub(1)
+				.unwrap_or(self.tabs.len() - 1)
+		};
+		self.selected_tab = new_index;
+	}
 
-    pub fn delete_tab(&mut self, index: usize) {
-        self.tabs.remove(index);
-        self.selected_tab = min(index, self.tabs.len() - 1);
-    }
+	pub fn open_file(&mut self, path_option: Option<&Path>) {
+		if let Some(path) = path_option {
+			for (index, tab) in self.tabs.clone().iter().enumerate() {
+				if tab.path == path {
+					self.selected_tab = index;
+					return;
+				}
+			}
+		}
+		if let Some(path) = path_option {
+			self.tabs.push(panels::Tab::new(path.to_path_buf()));
+		} else {
+			self.tabs.push(panels::Tab::default());
+		}
+		self.selected_tab = self.tabs.len() - 1;
+	}
 
-    pub fn toggle(&self, ui: &mut egui::Ui, display: bool, title: &str) -> bool {
-        let bg_color: Color32;
-        let text_color: Color32;
+	pub fn delete_tab(&mut self, index: usize) {
+		self.tabs.remove(index);
+		self.selected_tab = min(index, self.tabs.len() - 1);
+	}
 
-        if display {
-            bg_color = hex_str_to_color(self.theme.functions);
-            text_color = hex_str_to_color(self.theme.bg);
-        } else {
-            bg_color = hex_str_to_color(self.theme.bg);
-            text_color = hex_str_to_color(self.theme.literals);
-        };
+	pub fn toggle(&self, ui: &mut egui::Ui, display: bool, title: &str) -> bool {
+		let bg_color: Color32;
+		let text_color: Color32;
 
-        ui.style_mut().visuals.override_text_color = Some(text_color);
+		if display {
+			bg_color = hex_str_to_color(self.theme.functions);
+			text_color = hex_str_to_color(self.theme.bg);
+		} else {
+			bg_color = hex_str_to_color(self.theme.bg);
+			text_color = hex_str_to_color(self.theme.literals);
+		};
 
-        if ui.add(egui::Button::new(title).fill(bg_color)).clicked() {
-            return !display;
-        }
-        ui.style_mut().visuals.override_text_color = None;
+		ui.style_mut().visuals.override_text_color = Some(text_color);
 
-        display
-    }
+		if ui.add(egui::Button::new(title).fill(bg_color)).clicked() {
+			return !display;
+		}
+		ui.style_mut().visuals.override_text_color = None;
 
-    pub fn profiler(&self) -> String {
-        if !self.profiler_visible {
-            return "".to_string();
-        }
-        let combined_string: Vec<String> = TIME_LABELS
-            .into_iter()
-            .zip(self.time_watch.clone())
-            .map(|(s, v)| format!("{} : {:.1} ms", s, v))
-            .collect();
+		display
+	}
 
-        let mut result = combined_string.join(" ;  ");
-        result.push_str(&format!(
-            "	total : {:.1} ms",
-            self.time_watch.clone().iter().sum::<f32>()
-        ));
-        result
-    }
+	pub fn profiler(&self) -> String {
+		if !self.profiler_visible {
+			return "".to_string();
+		}
+		let combined_string: Vec<String> = TIME_LABELS
+			.into_iter()
+			.zip(self.time_watch.clone())
+			.map(|(s, v)| format!("{} : {:.1} ms", s, v))
+			.collect();
 
-    pub fn list_files(
-        &mut self,
-        ui: &mut egui::Ui,
-        file: &panels::FileEntry,
-        n_files: &mut usize,
-    ) -> bool {
-        *n_files += 1;
+		let mut result = combined_string.join(" ;  ");
+		result.push_str(&format!(
+			"	total : {:.1} ms",
+			self.time_watch.clone().iter().sum::<f32>()
+		));
+		result
+	}
 
-        if let Some(folder_content) = &file.folder_content {
-            let mut check_for_update: bool = false;
-            let collapsing_response = egui::CollapsingHeader::new(file.name.clone())
-                .default_open(self.tree_dir_opened.contains(&file.name))
-                .show(ui, |ui| {
-                    if !self.tree_dir_opened.contains(&file.name) {
-                        return;
-                    }
-                    for deeper_file in folder_content {
-                        if self.list_files(ui, deeper_file, n_files) {
-                            check_for_update = true;
-                        }
-                    }
-                });
-            if collapsing_response.fully_closed() {
-                self.tree_dir_opened.retain(|s| s != &file.name);
-            } else if !self.tree_dir_opened.contains(&file.name) {
-                self.tree_dir_opened.push(file.name.clone());
-                return !file.content_checked;
-            }
-            return check_for_update;
-        } else if ui.button(&file.name).clicked() {
-            self.open_file(Some(&file.path));
-        }
+	pub fn list_files(
+		&mut self,
+		ui: &mut egui::Ui,
+		file: &panels::FileEntry,
+		n_files: &mut usize,
+	) -> bool {
+		*n_files += 1;
 
-        false
-    }
+		if let Some(folder_content) = &file.folder_content {
+			let mut check_for_update: bool = false;
+			let collapsing_response = egui::CollapsingHeader::new(file.name.clone())
+				.default_open(self.tree_dir_opened.contains(&file.name))
+				.show(ui, |ui| {
+					if !self.tree_dir_opened.contains(&file.name) {
+						return;
+					}
+					for deeper_file in folder_content {
+						if self.list_files(ui, deeper_file, n_files) {
+							check_for_update = true;
+						}
+					}
+				});
+			if collapsing_response.fully_closed() {
+				self.tree_dir_opened.retain(|s| s != &file.name);
+			} else if !self.tree_dir_opened.contains(&file.name) {
+				self.tree_dir_opened.push(file.name.clone());
+				return !file.content_checked;
+			}
+			return check_for_update;
+		} else if ui.button(&file.name).clicked() {
+			self.open_file(Some(&file.path));
+		}
+
+		false
+	}
 }
 
 #[allow(clippy::unnecessary_lazy_evaluations)]
 pub fn hex_str_to_color(hex_str: &str) -> Color32 {
-    Color32::from_hex(hex_str).unwrap_or_else(|_| Color32::BLACK)
+	Color32::from_hex(hex_str).unwrap_or_else(|_| Color32::BLACK)
 }

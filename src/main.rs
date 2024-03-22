@@ -17,7 +17,7 @@ const TITLE: &str = " debug";
 #[cfg(not(debug_assertions))]
 const TITLE: &str = "";
 
-const ALLOWED_FILE_EXTENSIONS: [&str; 13] = ["", "rs", "toml", "txt", "project", "sh", "md", "html", "js", "css", "php", "py", "kv"];
+//const ALLOWED_FILE_EXTENSIONS: [&str; 14] = ["", "rs", "toml", "txt", "project", "sh", "md", "html", "js", "css", "php", "py", "kv", "nix"];
 const PROJECT_EXTENSION: &str = "project";
 const TERMINAL_HEIGHT: f32 = 200.0;
 const TERMINAL_RANGE: Range<f32> = 100.0..600.0;
@@ -25,6 +25,7 @@ const RED: egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
 const TIME_LABELS: [&str; 7] = [
 	"input", "settings", "tree", "terminal", "tabs", "content", "windows",
 ];
+const ZOOM_FACTOR: f32 = 1.1;
 const MAX_FPS: f32 = 30.0;
 const DISPLAY_PATH_DEPTH: usize = 3;
 const MAX_PROJECT_COLUMNS: usize = 8;
@@ -67,6 +68,7 @@ struct Calcifer {
 
 	theme: editor::ColorTheme,
 	font_size: f32,
+	zoom: f32,
 
 	project_content: panels::Project,
 
@@ -104,6 +106,7 @@ impl Default for Calcifer {
 
 			theme: editor::themes::DEFAULT_THEMES[0],
 			font_size: 14.0,
+			zoom: 1.0,
 
 			project_content: panels::Project::new(),
 
@@ -166,6 +169,10 @@ impl eframe::App for Calcifer {
 		.into();
 		ctx.set_style(style);
 
+		if ctx.zoom_factor() != self.zoom {
+			ctx.set_zoom_factor(self.zoom);
+		}
+
 		if ctx.input(|i| i.key_pressed(egui::Key::R) && i.modifiers.ctrl)
 			&& !self.refresh_confirm.visible
 		{
@@ -204,11 +211,11 @@ impl eframe::App for Calcifer {
 		}
 
 		if ctx.input(|i| i.zoom_delta() > 1.0) {
-			self.font_size = (self.font_size * 1.1).min(30.0);
+			self.zoom = (self.zoom*ZOOM_FACTOR).min(10.0);
 		}
 
 		if ctx.input(|i| i.zoom_delta() < 1.0) {
-			self.font_size = (self.font_size / 1.1).max(10.0);
+			self.zoom = (self.zoom/ZOOM_FACTOR).max(0.1);
 		}
 
 		if ctx.input(|i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {
