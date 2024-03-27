@@ -26,10 +26,6 @@ mkShell {
     xorg.libX11
     wayland
     libxkbcommon
-    python3Packages.virtualenv
-    python3Packages.plyer
-    python3Packages.pygobject3
-    python3Packages.pillow
   ];
 
   shellHook = ''

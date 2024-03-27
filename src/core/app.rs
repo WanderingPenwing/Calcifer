@@ -74,7 +74,6 @@ impl Calcifer {
 			..Default::default()
 		};
 
-		println!("zoom : {}", app_state.zoom.clone());
 		if app_state.zoom != 0.0 {
 			new.zoom = app_state.zoom;
 		}

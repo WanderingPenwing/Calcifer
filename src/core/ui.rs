@@ -314,6 +314,25 @@ impl Calcifer {
 			));
 			self.search_menu.result_selected = true;
 		}
+		
+		if self.got_focus {
+			CodeEditor::default()
+				.id_source("code editor")
+				.with_rows(max(45, lines))
+				.with_fontsize(self.font_size)
+				.with_theme(self.theme)
+				.with_syntax(to_syntax(&current_tab.language))
+				.with_numlines(true)
+				.show(
+					ui,
+					&mut current_tab.code.clone(),
+					&mut current_tab.saved.clone(),
+					&mut current_tab.last_cursor.clone(),
+					&mut current_tab.scroll_offset.clone(),
+					override_cursor.clone(),
+				);
+			return
+		}
 
 		CodeEditor::default()
 			.id_source("code editor")

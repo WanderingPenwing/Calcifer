@@ -59,6 +59,9 @@ fn main() -> Result<(), eframe::Error> {
 }
 
 struct Calcifer {
+	focused: bool,
+	got_focus: bool,
+	
 	selected_tab: usize,
 	tabs: Vec<panels::Tab>,
 
@@ -97,6 +100,9 @@ struct Calcifer {
 impl Default for Calcifer {
 	fn default() -> Self {
 		Self {
+			focused: true,
+			got_focus: false,
+			
 			selected_tab: 0,
 			tabs: vec![panels::Tab::default()],
 
@@ -221,6 +227,16 @@ impl eframe::App for Calcifer {
 		if ctx.input(|i| i.key_pressed(egui::Key::F) && i.modifiers.ctrl) {
 			self.search_menu.visible = !self.search_menu.visible;
 			self.search_menu.initialized = !self.search_menu.visible;
+		}
+		
+		self.got_focus = false;
+		if ctx.input(|i| !i.viewport().focused.unwrap_or_default()) {
+			self.focused = false;
+		} else {
+			if !self.focused {
+				self.got_focus = true;
+			}
+			self.focused = true;
 		}
 
 		if ctx.input(|i| i.viewport().close_requested()) {
