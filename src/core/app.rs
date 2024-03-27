@@ -66,7 +66,7 @@ impl Calcifer {
 		}
 	}
 
-	pub fn from_app_state(app_state: core::AppState) -> Self {
+	pub fn from_app_state(app_state: core::AppState, file_to_open: Option<PathBuf>) -> Self {
 		let mut new = Self {
 			theme: DEFAULT_THEMES[min(app_state.theme, DEFAULT_THEMES.len() - 1)],
 			tabs: Vec::new(),
@@ -85,6 +85,10 @@ impl Calcifer {
 			{
 				new.open_file(Some(&path));
 			}
+		}
+		
+		if let Some(path) = file_to_open {
+			new.open_file(Some(&path));
 		}
 
 		if new.tabs == vec![] {

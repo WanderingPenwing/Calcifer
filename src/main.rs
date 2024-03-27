@@ -5,6 +5,7 @@ use egui::{
 };
 use homedir::get_my_home;
 use std::{ops::Range, path::PathBuf, sync::Arc, thread, time};
+use std::env;
 
 mod core;
 mod editor;
@@ -50,11 +51,21 @@ fn main() -> Result<(), eframe::Error> {
 	} else {
 		core::AppState::default()
 	};
+	
+	let args: Vec<String> = env::args().collect();
+	let file_to_open = if args.len() > 1 {
+		println!("Opening file: {}", args[1].clone());
+		let mut path = env::current_dir().unwrap_or_default();
+		path.push(args[1].clone());
+		Some(path)
+	} else {
+		None
+	};
 
 	eframe::run_native(
 		&format!("Calcifer{}", TITLE),
 		options,
-		Box::new(move |_cc| Box::from(Calcifer::from_app_state(app_state))),
+		Box::new(move |_cc| Box::from(Calcifer::from_app_state(app_state, file_to_open))),
 	)
 }
 
