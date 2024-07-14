@@ -6,6 +6,7 @@ use egui::{
 use homedir::get_my_home;
 use std::{ops::Range, path::PathBuf, sync::Arc, thread, time};
 use std::env;
+use std::time::Duration;
 
 mod core;
 mod editor;
@@ -30,7 +31,7 @@ const ZOOM_FACTOR: f32 = 1.1;
 const MAX_FPS: f32 = 30.0;
 const DISPLAY_PATH_DEPTH: usize = 3;
 const MAX_PROJECT_COLUMNS: usize = 8;
-const RUNNING_COMMAND_REFRESH_DELAY: f32 = 0.1;
+const RUNNING_COMMAND_REFRESH_DELAY: f32 = 0.2;
 
 fn main() -> Result<(), eframe::Error> {
 	let icon_data = core::load_icon().unwrap_or_default();
@@ -304,9 +305,8 @@ impl eframe::App for Calcifer {
 
 		self.time_watch[6] = watch.elapsed().as_micros() as f32 / 1000.0;
 
-		if self.running_command && !ctx.input(|i| i.wants_repaint()) {
-			thread::sleep(time::Duration::from_secs_f32(RUNNING_COMMAND_REFRESH_DELAY));
-			egui::Context::request_repaint(ctx);
+		if self.running_command {
+			egui::Context::request_repaint_after(ctx, Duration::from_secs_f32(RUNNING_COMMAND_REFRESH_DELAY));
 		}
 	}
 
