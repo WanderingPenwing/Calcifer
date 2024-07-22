@@ -61,7 +61,7 @@ jobs:
       - name: Create tarball
         run: |
           release_tag=${{ github.event.release.tag_name }}
-          tar -czvf calcifer_v${release_tag}.tar.gz -C target/${{ matrix.target }}/release calcifer
+          tar -czvf calcifer_auto_v${release_tag}.tar.gz -C target/${{ matrix.target }}/release calcifer
 
       - name: Upload release assets
         uses: actions/upload-release-asset@v1
@@ -69,6 +69,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: calcifer_v${{ github.event.release.tag_name }}.tar.gz
-          asset_name: calcifer_v${{ github.event.release.tag_name }}.tar.gz
+          asset_path: calcifer_auto_v${{ github.event.release.tag_name }}.tar.gz
+          asset_name: calcifer_auto_v${{ github.event.release.tag_name }}.tar.gz
           asset_content_type: application/gzip
