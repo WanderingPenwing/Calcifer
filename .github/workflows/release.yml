@@ -35,13 +35,23 @@ jobs:
       - name: Install target
         run: rustup target add ${{ matrix.target }}
 
-      - name: Check Rust target installation
-        run: rustup target list --installed
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-x11-0 libglib2.0-dev libgl1-mesa-dev libglu1-mesa-dev libatk1.0-dev libgdk-pixbuf2.0-dev libwebkit2gtk-4.0-dev libgtk-3-dev
+
+      - name: Verify installed dependencies
+        run: |
+          ldconfig -p | grep xkbcommon
+          ldconfig -p | grep libGL
+          ldconfig -p | grep libGLU
+          ldconfig -p | grep libatk-1.0.so.0
+          ldconfig -p | grep libgdk_pixbuf-2.0.so.0
+          ldconfig -p | grep libwebkit2gtk-4.0.so.37
+          ldconfig -p | grep libgtk-3.so.0
 
       - name: Compile the app
         run: |
           echo "Compiling for target: ${{ matrix.target }}"
-          cargo build --release --target ${{ matrix.target }}
+          RUST_BACKTRACE=1 cargo build --release --target ${{ matrix.target }}
       
       - name: Create tarball
         run: |
