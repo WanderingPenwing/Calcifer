@@ -243,8 +243,7 @@ impl Calcifer {
 										ui.with_layout(
 											egui::Layout::left_to_right(egui::Align::TOP),
 											|ui| {
-												if ui
-													.add(
+													if ui.add(
 														egui::Label::new(
 															egui::RichText::new(format!(
 																" {}{}",
@@ -256,7 +255,8 @@ impl Calcifer {
 														.truncate(true)
 														.sense(egui::Sense::click()),
 													)
-													.clicked()
+													.clicked() ||
+													ui.add_sized(ui.available_size(), egui::Label::new("").sense(egui::Sense::click())).clicked()
 												{
 													self.selected_tab = index;
 												}
