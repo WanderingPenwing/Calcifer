@@ -211,11 +211,6 @@ impl eframe::App for Calcifer {
 			self.handle_save_file(self.save_tab());
 		}
 
-		if ctx.input(|i| i.key_pressed(egui::Key::T) && i.modifiers.ctrl) {
-			self.file_tree = None;
-			self.tree_dir_opened = vec![];
-		}
-
 		if ctx.input(|i| i.key_pressed(egui::Key::S) && i.modifiers.ctrl && i.modifiers.shift) {
 			self.handle_save_file(self.save_tab_as());
 		}

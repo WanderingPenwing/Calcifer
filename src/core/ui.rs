@@ -53,19 +53,26 @@ impl Calcifer {
 		if !self.tree_visible {
 			return;
 		}
-		let mut init_update : bool = false;
-		if self.file_tree.is_none() {
-			self.file_tree = Some(panels::generate_folder_entry(self.home.as_path()));
-			init_update = true
-		}
-		let mut n_files: usize = 0;
 		egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
-				ui.label("Bookshelf ");
+				ui.label(format!("Bookshelf   ({} files)    ", self.n_file_displayed));
+				if ui.button("↺").clicked() {
+					self.file_tree = None;
+				}
+				if ui.button("🗙").clicked() {
+					self.file_tree = None;
+					self.tree_dir_opened = vec![];
+				}
 			});
 			ui.separator();
-			ui.label(format!("{} files displayed", self.n_file_displayed));
-			ui.separator();
+			
+			let mut init_update : bool = false;
+			if self.file_tree.is_none() {
+				self.file_tree = Some(panels::generate_folder_entry(self.home.as_path()));
+				init_update = true
+			}
+			let mut n_files: usize = 0;
+		
 			egui::ScrollArea::vertical().show(ui, |ui| {
 				if let Some(file_tree) = self.file_tree.clone() {
 					let update_requested = self.list_files(ui, &file_tree, &mut n_files);
@@ -80,8 +87,9 @@ impl Calcifer {
 				}
 				ui.separator();
 			});
+			
+			self.n_file_displayed = n_files;
 		});
-		self.n_file_displayed = n_files;
 	}
 
 	pub fn draw_bottom_tray(&mut self, ctx: &egui::Context) {
@@ -211,7 +219,7 @@ impl Calcifer {
 										if ui
 											.add(
 												egui::Label::new(
-													egui::RichText::new(" X ").color(color),
+													egui::RichText::new(" ❌ ").color(color),
 												)
 												.sense(egui::Sense::click()),
 											)
@@ -280,6 +288,25 @@ impl Calcifer {
 					let mut path = self.tabs[self.selected_tab].path.clone();
 					path.pop();
 					panels::send_command(format!("cd {}", path.display()));
+				}
+				
+				if ui
+					.add(egui::Button::new("expand tree"))
+					.clicked()
+				{
+					let mut current_path = self.tabs[self.selected_tab].path.clone();
+					current_path.pop();
+					
+					while let Some(parent) = current_path.parent() {
+						let dir_id = panels::get_file_path_id(&current_path);
+						if !self.tree_dir_opened.contains(&dir_id) {
+							self.tree_dir_opened.push(dir_id);
+						}
+						current_path = parent.to_path_buf();
+					}
+					
+					self.tree_visible = true;
+					self.file_tree = None;
 				}
 
 				ui.label("Picked file:");

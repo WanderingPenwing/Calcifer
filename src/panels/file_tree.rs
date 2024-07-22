@@ -4,6 +4,11 @@ use std::{
 	fs, io,
 	path::{Path, PathBuf},
 };
+use std::hash::DefaultHasher;
+use std::time::UNIX_EPOCH;
+use std::time::SystemTime;
+use std::hash::Hasher;
+use std::hash::Hash;
 
 //use crate::ALLOWED_FILE_EXTENSIONS;
 
@@ -13,53 +18,72 @@ pub struct FileEntry {
 	pub path: PathBuf,
 	pub folder_content: Option<Vec<FileEntry>>,
 	pub content_checked: bool,
+	pub id: String,
 }
 
 impl FileEntry {
 	pub fn new_entry(name: String, path: PathBuf) -> Self {
 		Self {
 			name,
-			path,
+			path: path.clone(),
 			folder_content: None,
 			content_checked: true,
+			id: Self::generate_unique_id(path),
 		}
 	}
 	pub fn end_of_branch(name: String, path: PathBuf) -> Self {
 		Self {
 			name,
-			path,
+			path: path.clone(),
 			folder_content: Some(vec![]),
 			content_checked: false,
+			id: Self::generate_unique_id(path),
 		}
 	}
+	
+	 fn generate_unique_id(path: PathBuf) -> String {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+
+        let mut hasher = DefaultHasher::new();
+        now.hash(&mut hasher);
+
+        let hash = hasher.finish();
+		
+		format!("{}#{}", path.display(), hash) 
+    }
 }
 
 pub fn update_file_tree(file: FileEntry, opened_dirs: Vec<String>) -> FileEntry {
-	if opened_dirs.contains(&get_file_id(&file)) {
-		if let Some(folder_content) = &file.folder_content {
-			if !file.content_checked {
-				return generate_folder_entry(&file.path);
-			}
-			let updated_content: Vec<FileEntry> = folder_content
-				.iter()
-				.map(|entry| update_file_tree(entry.clone(), opened_dirs.clone()))
-				.collect();
-			FileEntry {
-				name: file.name,
-				path: file.path,
-				folder_content: Some(updated_content),
-				content_checked: true,
-			}
-		} else {
-			file
-		}
-	} else {
-		file
+	if !opened_dirs.contains(&get_file_path_id(&file.path)) {
+		return file;
+	}
+	
+	if !file.content_checked {
+		let folder = generate_folder_entry(&file.path);
+		return update_file_tree(folder, opened_dirs);
+	}
+	
+	if file.folder_content.is_none() {
+		return file;
+	}
+	
+	let folder_content = file.folder_content.expect("should have checked if none");
+	
+	let updated_content: Vec<FileEntry> = folder_content
+		.iter()
+		.map(|entry| update_file_tree(entry.clone(), opened_dirs.clone()))
+		.collect();
+	FileEntry {
+		name: file.name,
+		path: file.path.clone(),
+		folder_content: Some(updated_content),
+		content_checked: true,
+		id: FileEntry::generate_unique_id(file.path),
 	}
 }
 
-pub fn get_file_id(file: &FileEntry) -> String {
-	format!("#{}",file.path.clone().display())
+pub fn get_file_path_id(path: &PathBuf) -> String {
+	format!("#{}", path.clone().display())
 }
 
 pub fn generate_folder_entry(path: &Path) -> FileEntry {
@@ -106,6 +130,7 @@ pub fn generate_folder_entry(path: &Path) -> FileEntry {
 					path: path.to_path_buf(),
 					folder_content: Some(folder_content),
 					content_checked: true,
+					id: FileEntry::generate_unique_id(path.to_path_buf()),
 				}
 			}
 		}
