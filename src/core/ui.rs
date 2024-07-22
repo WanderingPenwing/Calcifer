@@ -313,9 +313,11 @@ impl Calcifer {
 			self.search_menu.result_selected = true;
 		}
 		
+		let tab_id = current_tab.path.clone().to_string_lossy().to_string();
+		
 		if self.got_focus {
 			CodeEditor::default()
-				.id_source("code editor")
+				.id_source(&tab_id)
 				.with_rows(max(45, lines))
 				.with_fontsize(self.font_size)
 				.with_theme(self.theme)
@@ -333,7 +335,7 @@ impl Calcifer {
 		}
 
 		CodeEditor::default()
-			.id_source("code editor")
+			.id_source(&tab_id)
 			.with_rows(max(45, lines))
 			.with_fontsize(self.font_size)
 			.with_theme(self.theme)
