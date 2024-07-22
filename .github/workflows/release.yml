@@ -43,7 +43,7 @@ jobs:
           echo "Compiling for target: ${{ matrix.target }}"
           cargo build --release --target ${{ matrix.target }}
       
-     - name: Create tarball
+      - name: Create tarball
         run: |
           release_tag=${{ github.event.release.tag_name }}
           tar -czvf calcifer_v${release_tag}.tar.gz -C target/${{ matrix.target }}/release calcifer
