@@ -29,19 +29,18 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install mingw-w64 for Windows target
-        if: matrix.target == 'x86_64-pc-windows-gnu'
-        run: sudo apt-get install mingw-w64
-
-      - name: Install musl-tools for Linux target
-        if: matrix.target == 'x86_64-unknown-linux-musl'
-        run: sudo apt-get install musl-tools
-
       - name: Install target
         run: rustup target add ${{ matrix.target }}
 
+      - name: Install dependencies for tinyfiledialogs
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libglib2.0-dev
+
       - name: Compile the app
-        run: cargo build --release --target ${{ matrix.target }}
+        run: |
+          cargo build --release --target ${{ matrix.target }}
 
       - name: Create tarball
         run: |
