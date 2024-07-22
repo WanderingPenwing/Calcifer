@@ -35,7 +35,7 @@ impl FileEntry {
 }
 
 pub fn update_file_tree(file: FileEntry, opened_dirs: Vec<String>) -> FileEntry {
-	if opened_dirs.contains(&file.name) {
+	if opened_dirs.contains(&get_file_id(&file)) {
 		if let Some(folder_content) = &file.folder_content {
 			if !file.content_checked {
 				return generate_folder_entry(&file.path);
@@ -56,6 +56,10 @@ pub fn update_file_tree(file: FileEntry, opened_dirs: Vec<String>) -> FileEntry 
 	} else {
 		file
 	}
+}
+
+pub fn get_file_id(file: &FileEntry) -> String {
+	format!("#{}",file.path.clone().display())
 }
 
 pub fn generate_folder_entry(path: &Path) -> FileEntry {

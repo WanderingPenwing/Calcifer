@@ -209,10 +209,13 @@ impl Calcifer {
 
 		if let Some(folder_content) = &file.folder_content {
 			let mut check_for_update: bool = false;
-			let collapsing_response = egui::CollapsingHeader::new(file.name.clone())
-				.default_open(self.tree_dir_opened.contains(&file.name))
+			let file_id = panels::get_file_id(&file);
+			
+			let collapsing_response = egui::CollapsingHeader::new(&file.name.clone())
+				.id_source(&file_id)
+				.default_open(self.tree_dir_opened.contains(&file_id))
 				.show(ui, |ui| {
-					if !self.tree_dir_opened.contains(&file.name) {
+					if !self.tree_dir_opened.contains(&file_id) {
 						return;
 					}
 					for deeper_file in folder_content {
@@ -222,9 +225,9 @@ impl Calcifer {
 					}
 				});
 			if collapsing_response.fully_closed() {
-				self.tree_dir_opened.retain(|s| s != &file.name);
-			} else if !self.tree_dir_opened.contains(&file.name) {
-				self.tree_dir_opened.push(file.name.clone());
+				self.tree_dir_opened.retain(|s| s != &file_id);
+			} else if !self.tree_dir_opened.contains(&file_id) {
+				self.tree_dir_opened.push(file_id);
 				return !file.content_checked;
 			}
 			return check_for_update;
