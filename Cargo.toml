@@ -2,6 +2,7 @@
 name = "calcifer"
 version = "1.4.0"
 edition = "2021"
+build = "build/build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,6 +17,3 @@ nix = { version = "0.27.1", features = ["fs"] }
 homedir = "0.2.1"
 arboard = "3.3.0"
 egui_dnd = "0.6.0"
-
-[build]
-rustflags = ["--cfg=web_sys_unstable_apis"]

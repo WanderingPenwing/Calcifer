@@ -1,0 +1,57 @@
+permissions:
+  contents: write
+  actions: read
+  checks: write
+  deployments: write
+  issues: write
+  packages: write
+  pull-requests: write
+  statuses: write
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    name: release ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
+    steps:
+      - uses: actions/checkout@master
+      
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Compile the app
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+
+      - name: Create tarball
+        run: |
+          release_tag=${{ github.event.release.tag_name }}
+          if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-musl" ]]; then
+            tar -czvf calcifer_v${release_tag}.tar.gz -C target/${{ matrix.target }}/release calcifer
+          elif [[ "${{ matrix.target }}" == "x86_64-pc-windows-gnu" ]]; then
+            tar -czvf calcifer_windows_v${release_tag}.tar.gz -C target/${{ matrix.target }}/release calcifer.exe
+          fi
+
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: |
+            calcifer_v${{ github.event.release.tag_name }}.tar.gz
+            calcifer_windows_v${{ github.event.release.tag_name }}.tar.gz
+          asset_name: |
+            calcifer_v${{ github.event.release.tag_name }}.tar.gz
+            calcifer_windows_v${{ github.event.release.tag_name }}.tar.gz
+          asset_content_type: application/gzip
