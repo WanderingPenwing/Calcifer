@@ -51,16 +51,16 @@ impl Calcifer {
 		} else {
 			self.tabs[self.selected_tab].path.to_string_lossy()
 		};
-		println!("app : open dialog at {}", save_path);
-		if let Some(path_string) = tinyfiledialogs::save_file_dialog("Save as", &save_path)
-		{
-			let path = PathBuf::from(path_string);
-			if let Err(err) = fs::write(&path, &self.tabs[self.selected_tab].code) {
-				eprintln!("Error writing file: {}", err);
-				return None;
-			}
-			return Some(path);
-		}
+		println!("app : tried to open dialog at {}", save_path);
+//		if let Some(path_string) = tinyfiledialogs::save_file_dialog("Save as", &save_path)
+//		{
+//			let path = PathBuf::from(path_string);
+//			if let Err(err) = fs::write(&path, &self.tabs[self.selected_tab].code) {
+//				eprintln!("Error writing file: {}", err);
+//				return None;
+//			}
+//			return Some(path);
+//		}
 		None
 	}
 

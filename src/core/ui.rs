@@ -22,10 +22,11 @@ impl Calcifer {
 			.show(ctx, |ui| {
 				ui.vertical(|ui| {
 					if ui.add(egui::Button::new("📁")).clicked() {
-						if let Some(path_string) = tinyfiledialogs::open_file_dialog("Open File", &self.home.to_string_lossy(), None)
-						{
-							self.open_file(Some(&Path::new(&path_string)));
-						}
+						println!("ui : open file, wip");
+//						if let Some(path_string) = tinyfiledialogs::open_file_dialog("Open File", &self.home.to_string_lossy(), None)
+//						{
+//							self.open_file(Some(&Path::new(&path_string)));
+//						}
 					}
 					ui.separator();
 					self.tree_visible = self.toggle(ui, self.tree_visible, "📦");
@@ -55,7 +56,7 @@ impl Calcifer {
 		}
 		egui::SidePanel::left("file_tree_panel").show(ctx, |ui| {
 			ui.horizontal(|ui| {
-				ui.label(format!("Bookshelf   ({} files)    ", self.n_file_displayed));
+				ui.label(format!("Bookshelf   ({} files)	", self.n_file_displayed));
 				if ui.button("↺").clicked() {
 					self.file_tree = None;
 				}

@@ -32,17 +32,8 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install musl-gcc
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y musl-tools
-
       - name: Install target
         run: rustup target add ${{ matrix.target }}
-
-      - name: Install dependencies for tinyfiledialogs
-        run: |
-          sudo apt-get install -y libx11-dev libglib2.0-dev
 
       - name: Check Rust target installation
         run: rustup target list --installed
@@ -52,17 +43,7 @@ jobs:
           echo "Compiling for target: ${{ matrix.target }}"
           cargo build --release --target ${{ matrix.target }}
       
-      - name: Debugging - Check compiled binary
-        run: |
-          echo "Listing the compiled files:"
-          ls -lh target/${{ matrix.target }}/release/
-
-      - name: Run the app (for testing purposes)
-        run: |
-          echo "Running the compiled app for testing"
-          target/${{ matrix.target }}/release/calcifer --help || true
-
-      - name: Create tarball
+     - name: Create tarball
         run: |
           release_tag=${{ github.event.release.tag_name }}
           tar -czvf calcifer_v${release_tag}.tar.gz -C target/${{ matrix.target }}/release calcifer
