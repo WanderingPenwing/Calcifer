@@ -32,6 +32,11 @@ jobs:
           toolchain: stable
           override: true
 
+      - name: Install musl-gcc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
       - name: Install target
         run: rustup target add ${{ matrix.target }}
 

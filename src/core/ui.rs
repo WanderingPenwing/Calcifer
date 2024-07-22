@@ -22,11 +22,10 @@ impl Calcifer {
 			.show(ctx, |ui| {
 				ui.vertical(|ui| {
 					if ui.add(egui::Button::new("📁")).clicked() {
-						println!("ui : open file, wip");
-//						if let Some(path_string) = tinyfiledialogs::open_file_dialog("Open File", &self.home.to_string_lossy(), None)
-//						{
-//							self.open_file(Some(&Path::new(&path_string)));
-//						}
+						if let Some(path_string) = tinyfiledialogs::open_file_dialog("Open File", &self.home.to_string_lossy(), None)
+						{
+							self.open_file(Some(&Path::new(&path_string)));
+						}
 					}
 					ui.separator();
 					self.tree_visible = self.toggle(ui, self.tree_visible, "📦");

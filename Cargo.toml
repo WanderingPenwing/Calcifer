@@ -2,12 +2,13 @@
 name = "calcifer"
 version = "1.4.0"
 edition = "2021"
-#build = "build/build.rs"
+build = "build/build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 eframe = "0.25.0"
+tinyfiledialogs = "3.0"
 egui_extras = "0.25.0"
 image = "0.24.8"
 serde = { version = "1.0.195", features = ["derive"] }
