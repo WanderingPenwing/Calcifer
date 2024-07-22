@@ -21,13 +21,16 @@ jobs:
       matrix:
         target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
     steps:
-      - uses: actions/checkout@master
-      
+      - uses: actions/checkout@v2
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+
+      - name: Install target
+        run: rustup target add ${{ matrix.target }}
 
       - name: Compile the app
         run: |
