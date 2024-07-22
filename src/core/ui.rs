@@ -22,11 +22,9 @@ impl Calcifer {
 			.show(ctx, |ui| {
 				ui.vertical(|ui| {
 					if ui.add(egui::Button::new("📁")).clicked() {
-						if let Some(path) = rfd::FileDialog::new()
-							.set_directory(self.home.as_path())
-							.pick_file()
+						if let Some(path_string) = tinyfiledialogs::open_file_dialog("Open File", &self.home.to_string_lossy(), None)
 						{
-							self.open_file(Some(&path));
+							self.open_file(Some(&Path::new(&path_string)));
 						}
 					}
 					ui.separator();

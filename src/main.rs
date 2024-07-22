@@ -322,7 +322,8 @@ fn save_path() -> PathBuf {
 			.unwrap()
 			.unwrap()
 			.as_path()
-			.join(".calcifer")
+			.join(".config")
+			.join("calcifer")
 			.join("save.json")
 			.to_path_buf()
 	} else {
@@ -330,9 +331,9 @@ fn save_path() -> PathBuf {
 			.unwrap()
 			.unwrap()
 			.as_path()
-			.join(".calcifer")
-			.join("debug")
-			.join("save.json")
+			.join(".config")
+			.join("calcifer")
+			.join("debug_save.json")
 			.to_path_buf()
 	}
 }

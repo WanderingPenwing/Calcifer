@@ -36,17 +36,25 @@ impl Calcifer {
 				&self.tabs[self.selected_tab].code,
 			) {
 				eprintln!("Error writing file: {}", err);
-				return None;
+				return self.save_tab_as();
 			}
 			Some(self.tabs[self.selected_tab].path.clone())
 		}
 	}
 
 	pub fn save_tab_as(&self) -> Option<PathBuf> {
-		if let Some(path) = rfd::FileDialog::new()
-			.set_directory(self.home.as_path())
-			.save_file()
+		let default_path = self.home.join("untitled");
+		
+		let save_path = if self.tabs[self.selected_tab].path.file_name().map_or(true, |name| name.to_string_lossy() == "untitled")
 		{
+			default_path.to_string_lossy()
+		} else {
+			self.tabs[self.selected_tab].path.to_string_lossy()
+		};
+		println!("app : open dialog at {}", save_path);
+		if let Some(path_string) = tinyfiledialogs::save_file_dialog("Save as", &save_path)
+		{
+			let path = PathBuf::from(path_string);
 			if let Err(err) = fs::write(&path, &self.tabs[self.selected_tab].code) {
 				eprintln!("Error writing file: {}", err);
 				return None;
