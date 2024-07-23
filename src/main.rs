@@ -25,7 +25,7 @@ const TERMINAL_HEIGHT: f32 = 200.0;
 const TERMINAL_RANGE: Range<f32> = 100.0..600.0;
 const RED: egui::Color32 = egui::Color32::from_rgb(235, 108, 99);
 const TIME_LABELS: [&str; 7] = [
-	"input", "settings", "tree", "terminal", "tabs", "content", "windows",
+	"input", "settings", "tree", "terminal+tray", "tabs", "content", "windows",
 ];
 const ZOOM_FACTOR: f32 = 1.1;
 const MAX_FPS: f32 = 30.0;
@@ -265,6 +265,14 @@ impl eframe::App for Calcifer {
 				);
 				self.exit_confirm.ask();
 			}
+		}
+		
+		if self.tabs.len() == 0 {
+			egui::Context::send_viewport_cmd(
+					ctx,
+					egui::ViewportCommand::Close,
+				);
+			return
 		}
 
 		self.time_watch[0] = watch.elapsed().as_micros() as f32 / 1000.0;

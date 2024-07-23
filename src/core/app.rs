@@ -155,7 +155,9 @@ impl Calcifer {
 
 	pub fn delete_tab(&mut self, index: usize) {
 		self.tabs.remove(index);
-		self.selected_tab = min(index, self.tabs.len() - 1);
+		if self.tabs.len() != 0 {
+			self.selected_tab = min(index, self.tabs.len() - 1);
+		}
 	}
 
 	pub fn toggle(&self, ui: &mut egui::Ui, display: bool, title: &str) -> bool {

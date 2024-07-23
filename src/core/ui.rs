@@ -28,16 +28,28 @@ impl Calcifer {
 						}
 					}
 					ui.separator();
+					
 					self.tree_visible = self.toggle(ui, self.tree_visible, "📦");
 					ui.separator();
-					self.terminal_visible = self.toggle(ui, self.terminal_visible, "🖵");
+					
+					let toggle_terminal = self.toggle(ui, self.terminal_visible, "🖵");
+					if toggle_terminal && !self.terminal_visible {
+						let mut path = self.tabs[self.selected_tab].path.clone();
+						path.pop();
+						panels::send_command(format!("cd {}", path.display()));
+					}
+					self.terminal_visible = toggle_terminal;
 					ui.separator();
+					
 					self.search_menu.visible = self.toggle(ui, self.search_menu.visible, "🔍");
 					ui.separator();
+					
 					self.settings_menu.visible = self.toggle(ui, self.settings_menu.visible, "⚙");
 					ui.separator();
+					
 					self.shortcuts_menu.visible = self.toggle(ui, self.shortcuts_menu.visible, "⌨");
 					ui.separator();
+					
 					self.profiler_visible = self.toggle(ui, self.profiler_visible, "⚡");
 
 					if self.tabs[self.selected_tab].language == PROJECT_EXTENSION {
@@ -226,18 +238,11 @@ impl Calcifer {
 											.clicked()
 											&& !self.close_tab_confirm.visible
 										{
-											if self.tabs.len() > 1 {
-												if tab.saved {
-													self.delete_tab(index);
-												} else {
-													self.close_tab_confirm.ask();
-													self.tab_to_close = index;
-												}
+											if tab.saved {
+												self.delete_tab(index);
 											} else {
-												egui::Context::send_viewport_cmd(
-													ctx,
-													egui::ViewportCommand::Close,
-												);
+												self.close_tab_confirm.ask();
+												self.tab_to_close = index;
 											}
 										}
 										ui.with_layout(
@@ -268,7 +273,7 @@ impl Calcifer {
 						}
 						strip.cell(|ui| {
 							if ui
-								.add(egui::Label::new("  +").sense(egui::Sense::click()))
+								.add(egui::Label::new("  ➕").sense(egui::Sense::click()))
 								.clicked()
 							{
 								self.open_file(None);
@@ -280,20 +285,12 @@ impl Calcifer {
 
 	pub fn draw_content_panel(&mut self, ctx: &egui::Context) {
 		egui::CentralPanel::default().show(ctx, |ui| {
+			if self.selected_tab >= self.tabs.len() {
+				return
+			}
 			ui.horizontal(|ui| {
-				if ui
-					.add(egui::Button::new("open directory in terminal"))
-					.clicked()
-				{
-					let mut path = self.tabs[self.selected_tab].path.clone();
-					path.pop();
-					panels::send_command(format!("cd {}", path.display()));
-				}
-				
-				if ui
-					.add(egui::Button::new("expand tree"))
-					.clicked()
-				{
+				ui.style_mut().visuals.hyperlink_color = core::hex_str_to_color(self.theme.comments);
+				if ui.link(self.tabs[self.selected_tab].path.to_string_lossy().to_string()).clicked() {
 					let mut current_path = self.tabs[self.selected_tab].path.clone();
 					current_path.pop();
 					
@@ -308,14 +305,6 @@ impl Calcifer {
 					self.tree_visible = true;
 					self.file_tree = None;
 				}
-
-				ui.label("Picked file:");
-				ui.monospace(
-					self.tabs[self.selected_tab]
-						.path
-						.to_string_lossy()
-						.to_string(),
-				);
 			});
 
 			ui.separator();
