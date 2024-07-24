@@ -1,6 +1,6 @@
 use eframe::egui;
 use egui::Color32;
-use std::{cmp::min, fs, path::Path, path::PathBuf};
+use std::{cmp::min, cmp::max, fs, path::Path, path::PathBuf};
 
 use crate::core;
 use crate::editor::themes::DEFAULT_THEMES;
@@ -237,6 +237,10 @@ impl Calcifer {
 		}
 
 		false
+	}
+	
+	pub fn tab_area_size(&self) -> usize {
+		max(6, self.tabs.len() + 1)
 	}
 }
 

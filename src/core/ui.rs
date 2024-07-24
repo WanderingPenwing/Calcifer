@@ -208,8 +208,8 @@ impl Calcifer {
 					0.0,
 					core::hex_str_to_color(self.theme.bg),
 				);
-				StripBuilder::new(ui)
-					.sizes(Size::remainder(), max(6, self.tabs.len() + 1))
+				let response = StripBuilder::new(ui)
+					.sizes(Size::remainder(), self.tab_area_size())
 					.sense(egui::Sense::click())
 					.horizontal(|mut strip| {
 						for (index, tab) in self.tabs.clone().iter().enumerate() {
@@ -279,7 +279,8 @@ impl Calcifer {
 								self.open_file(None);
 							}
 						});
-					});
+				});
+				self.tab_rect = response.rect;
 			});
 	}
 
@@ -444,6 +445,87 @@ impl Calcifer {
 
 		self.handle_confirm();
 	}
+	
+	pub fn draw_mouse_drag(&mut self, ctx: &egui::Context) {
+		if ctx.input(|i| i.pointer.is_decidedly_dragging()) {
+			if let Some(pos) = ctx.input(|i| i.pointer.interact_pos()) {
+				match self.mouse_holder {
+					panels::MouseHolder::TabHolder(index) => {
+						egui::Area::new(egui::Id::new("mouse_holder"))
+						.fixed_pos(pos)
+						.show(ctx, |ui| {
+							let (bg_color, text_color) = if self.selected_tab == index {
+								(core::hex_str_to_color(self.theme.functions), core::hex_str_to_color(self.theme.bg))
+							} else {
+								(core::hex_str_to_color(self.theme.bg), core::hex_str_to_color(self.theme.comments))
+							};
+							
+							
+							let rect = egui::Rect::from_center_size(
+								egui::Pos2::new(pos.x, (self.tab_rect.max.y + self.tab_rect.min.y) / 2.0),
+								egui::Vec2::new((self.tab_rect.max.x - self.tab_rect.min.x) / usize_to_f32(self.tab_area_size()), self.tab_rect.max.y - self.tab_rect.min.y)
+							);
+							
+							ui.painter().rect_filled(
+								rect,
+								0.0,
+								bg_color,
+							);
+							let unsaved_indicator = if self.tabs[index].saved { "" } else { "~ " };
+							
+							let _ = ui.put(rect, egui::Label::new(egui::RichText::new(format!(" {}{}", unsaved_indicator, self.tabs[index].get_name())).color(text_color)));
+						});
+					}
+					panels::MouseHolder::None => {
+						if self.tab_rect.distance_to_pos(pos) == 0.0 {
+							let hover_pos : f32 = (pos.x - self.tab_rect.min.x) / ((self.tab_rect.max.x - self.tab_rect.min.x) / usize_to_f32(self.tab_area_size()));
+							
+							if let Some(index) = floor_f32(hover_pos) {
+								if index < self.tabs.len() {
+									self.mouse_holder = panels::MouseHolder::TabHolder(index);
+								}
+							}
+						}
+					}
+				}
+			}
+			return
+		}
+		
+		match self.mouse_holder {
+			panels::MouseHolder::TabHolder(initial_index) => {
+				if let Some(pos) = ctx.input(|i| i.pointer.interact_pos()) {
+					if self.tab_rect.distance_to_pos(pos) == 0.0 {
+						let hover_pos : f32 = (pos.x - self.tab_rect.min.x) / ((self.tab_rect.max.x - self.tab_rect.min.x) / usize_to_f32(self.tab_area_size()));
+								
+						if let Some(final_index) = floor_f32(hover_pos) {
+							if final_index == initial_index {
+								return
+							} else if final_index < initial_index {
+								self.tabs.insert(final_index, self.tabs[initial_index].clone());
+								self.tabs.remove(initial_index + 1);
+							} else {
+								self.tabs.insert(final_index + 1, self.tabs[initial_index].clone());
+								self.tabs.remove(initial_index);
+							}
+							
+							if self.selected_tab == initial_index {
+								self.selected_tab = final_index;
+							} else if self.selected_tab < initial_index && self.selected_tab >= final_index {
+								self.selected_tab += 1;
+							} else if self.selected_tab > initial_index && self.selected_tab <= final_index {
+								self.selected_tab -= 1;
+							}
+						}
+					}
+				}
+			}
+			
+			panels::MouseHolder::None => {}
+		}
+		
+		self.mouse_holder = panels::MouseHolder::None;
+	}
 }
 
 fn to_syntax(language: &str) -> Syntax {
@@ -475,4 +557,23 @@ pub fn format_path(path: &Path) -> String {
 			.collect::<Vec<_>>()
 			.join("/")
 	)
+}
+
+
+fn usize_to_f32(value: usize) -> f32 {
+    const MAX_F32: f32 = f32::MAX;
+
+    if value as f64 > MAX_F32 as f64 {
+        MAX_F32
+    } else {
+        value as f32
+    }
+}
+
+fn floor_f32(value: f32) -> Option<usize> {
+    if value.is_nan() || value < 0.0 || value > usize::MAX as f32 {
+        None
+    } else {
+        Some(value.floor() as usize)
+    }
 }

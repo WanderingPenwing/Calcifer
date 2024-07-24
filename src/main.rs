@@ -76,6 +76,8 @@ struct Calcifer {
 	
 	selected_tab: usize,
 	tabs: Vec<panels::Tab>,
+	tab_rect: egui::Rect,
+	mouse_holder: panels::MouseHolder,
 
 	command: String,
 	command_history: Vec<panels::CommandEntry>,
@@ -117,6 +119,8 @@ impl Default for Calcifer {
 			
 			selected_tab: 0,
 			tabs: vec![panels::Tab::default()],
+			tab_rect: egui::Rect::EVERYTHING,
+			mouse_holder: panels::MouseHolder::None,
 
 			command: String::new(),
 			command_history: Vec::new(),
@@ -305,6 +309,7 @@ impl eframe::App for Calcifer {
 		watch = time::Instant::now();
 
 		self.draw_windows(ctx);
+		self.draw_mouse_drag(ctx);
 
 		self.time_watch[6] = watch.elapsed().as_micros() as f32 / 1000.0;
 
