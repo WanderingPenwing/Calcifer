@@ -451,9 +451,9 @@ impl Calcifer {
 			if let Some(pos) = ctx.input(|i| i.pointer.interact_pos()) {
 				match self.mouse_holder {
 					panels::MouseHolder::TabHolder(index) => {
-						egui::Area::new(egui::Id::new("mouse_holder"))
-						.fixed_pos(pos)
-						.show(ctx, |ui| {
+						let snapped_pos = egui::Pos2::new(pos.x, (self.tab_rect.max.y + self.tab_rect.min.y) / 2.0);
+						
+						egui::Area::new(egui::Id::new("mouse_holder")).fixed_pos(snapped_pos).show(ctx, |ui| {
 							let (bg_color, text_color) = if self.selected_tab == index {
 								(core::hex_str_to_color(self.theme.functions), core::hex_str_to_color(self.theme.bg))
 							} else {
@@ -462,7 +462,7 @@ impl Calcifer {
 							
 							
 							let rect = egui::Rect::from_center_size(
-								egui::Pos2::new(pos.x, (self.tab_rect.max.y + self.tab_rect.min.y) / 2.0),
+								snapped_pos,
 								egui::Vec2::new((self.tab_rect.max.x - self.tab_rect.min.x) / usize_to_f32(self.tab_area_size()), self.tab_rect.max.y - self.tab_rect.min.y)
 							);
 							
@@ -495,7 +495,8 @@ impl Calcifer {
 		match self.mouse_holder {
 			panels::MouseHolder::TabHolder(initial_index) => {
 				if let Some(pos) = ctx.input(|i| i.pointer.interact_pos()) {
-					if self.tab_rect.distance_to_pos(pos) == 0.0 {
+					let snapped_pos = egui::Pos2::new(pos.x, (self.tab_rect.max.y + self.tab_rect.min.y) / 2.0);
+					if self.tab_rect.distance_to_pos(snapped_pos) == 0.0 {
 						let hover_pos : f32 = (pos.x - self.tab_rect.min.x) / ((self.tab_rect.max.x - self.tab_rect.min.x) / usize_to_f32(self.tab_area_size()));
 								
 						if let Some(final_index) = floor_f32(hover_pos) {
@@ -561,19 +562,19 @@ pub fn format_path(path: &Path) -> String {
 
 
 fn usize_to_f32(value: usize) -> f32 {
-    const MAX_F32: f32 = f32::MAX;
+	const MAX_F32: f32 = f32::MAX;
 
-    if value as f64 > MAX_F32 as f64 {
-        MAX_F32
-    } else {
-        value as f32
-    }
+	if value as f64 > MAX_F32 as f64 {
+		MAX_F32
+	} else {
+		value as f32
+	}
 }
 
 fn floor_f32(value: f32) -> Option<usize> {
-    if value.is_nan() || value < 0.0 || value > usize::MAX as f32 {
-        None
-    } else {
-        Some(value.floor() as usize)
-    }
+	if value.is_nan() || value < 0.0 || value > usize::MAX as f32 {
+		None
+	} else {
+		Some(value.floor() as usize)
+	}
 }
