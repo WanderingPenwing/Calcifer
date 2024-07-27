@@ -1,7 +1,6 @@
 use eframe::egui;
 use serde::{Deserialize, Serialize};
 use std::{
-	cmp::min,
 	cmp::max,
 	sync::atomic::{AtomicUsize, Ordering},
 };
@@ -178,13 +177,6 @@ pub fn draw_project(ui: &mut egui::Ui, theme: ColorTheme, project: &mut Project)
 					.content
 					.push(Item::new("item"));
 			}
-			//			if category.name != "+" {
-			//				if ui.add(egui::Button::new("+")).clicked() {
-			//					project.categories[category_index]
-			//						.content
-			//						.push(Item::new("item"));
-			//				}
-			//			}
 		}
 	});
 
@@ -238,23 +230,15 @@ pub fn draw_project(ui: &mut egui::Ui, theme: ColorTheme, project: &mut Project)
 		&& project.selected_item.category > 0
 	{
 		moved = true;
-		if !project.was_moving {
+		if !project.was_moving && project.categories[category - 1].content.len() > 0 {
 			project.selected_item.category -= 1;
-			project.selected_item.row = min(
-				project.categories[category].content.len() - 1,
-				project.selected_item.row,
-			);
 		}
 	} else if ui.input(|i| i.key_pressed(egui::Key::ArrowRight))
 		&& project.selected_item.category < project.categories.len() - 2
 	{
 		moved = true;
-		if !project.was_moving {
+		if !project.was_moving && project.categories[category + 1].content.len() > 0 {
 			project.selected_item.category += 1;
-			project.selected_item.row = min(
-				project.categories[category].content.len() - 1,
-				project.selected_item.row,
-			);
 		}
 	} else if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) && project.selected_item.row > 0 {
 		moved = true;

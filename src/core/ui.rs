@@ -1,7 +1,7 @@
 use eframe::egui;
 use egui::{text::CCursor, text_edit::CCursorRange, Rangef};
 use egui_extras::{Size, StripBuilder};
-use std::{cmp::max, env, ffi::OsStr, path::Component, path::Path, path::PathBuf};
+use std::{cmp::max, cmp::min, env, ffi::OsStr, path::Component, path::Path, path::PathBuf};
 
 use crate::core;
 use crate::editor;
@@ -374,6 +374,16 @@ impl Calcifer {
 		self.project_content
 			.update_from_code(current_tab.code.clone());
 		panels::draw_project(ui, self.theme, &mut self.project_content);
+		
+		self.project_content.selected_item.category = min(self.project_content.categories.len() - 2, self.project_content.selected_item.category);
+		while self.project_content.categories[self.project_content.selected_item.category].content.is_empty() && self.project_content.selected_item.category > 0 {
+			self.project_content.selected_item.category -= 1;
+		}
+		if !self.project_content.categories[self.project_content.selected_item.category].content.is_empty() {
+			self.project_content.selected_item.row = min(self.project_content.categories[self.project_content.selected_item.category].content.len() - 1, self.project_content.selected_item.row);
+		} else {
+			self.project_content.selected_item.row = 0;
+		}	
 		
 		if self.project_content.item_window.visible {
 			if self.project_content.categories.len() > 1
