@@ -9,7 +9,7 @@ mkShell {
     libXi
     pkg-config
   ] ++ [
-    cargo
+    #cargo
     rustc
     atk
     gdk-pixbuf
@@ -19,12 +19,12 @@ mkShell {
     libGLU
     libxkbcommon
     gtk3-x11
-    gnome.zenity
+    #gnome.zenity
   ];
   buildInputs = [
     latest.rustChannels.stable.rust
     xorg.libX11
-    wayland
+    # wayland
     libxkbcommon
   ];
 
