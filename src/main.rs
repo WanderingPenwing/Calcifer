@@ -179,6 +179,27 @@ impl eframe::App for Calcifer {
 
         let mut watch = time::Instant::now();
 
+        let mut fonts = egui::FontDefinitions::default();
+        
+        fonts.font_data.insert(
+            "my_font".to_owned(),
+            egui::FontData::from_static(include_bytes!(
+                "../assets/font.ttf"
+            )),
+        );
+    
+        fonts.families
+            .get_mut(&egui::FontFamily::Proportional)
+            .unwrap()
+            .insert(0, "my_font".to_owned());
+    
+        fonts.families
+            .get_mut(&egui::FontFamily::Monospace)
+            .unwrap()
+            .push("my_font".to_owned());
+    
+        ctx.set_fonts(fonts);
+
         let mut style = (*ctx.style()).clone();
         style.text_styles = [
             (
