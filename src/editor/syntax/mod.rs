@@ -6,6 +6,7 @@ pub mod python;
 pub mod rust;
 pub mod shell;
 pub mod sql;
+pub mod pendragon;
 
 use std::collections::BTreeSet;
 use std::hash::{Hash, Hasher};
